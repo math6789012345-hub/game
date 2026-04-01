@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+</head>
+<body>
+    <h2>User Profile</h2>
+    <p><strong>Name:</strong> <span id="pName"></span></p>
+    <p><strong>Email:</strong> <span id="pEmail"></span></p>
+    
+    <button onclick="location.href='profile/edit.html'">Edit Details</button>
+    <button onclick="location.href='profile/games.html'">My Games</button>
+    <button onclick="location.href='games.html'">Browse Games</button>
+
+    <script>
+        if(!localStorage.getItem('userId')) window.location.href = 'login.html';
+        document.getElementById('pName').innerText = localStorage.getItem('userName');
+        document.getElementById('pEmail').innerText = localStorage.getItem('userEmail');
+    </script>
+</body>
+</html>
