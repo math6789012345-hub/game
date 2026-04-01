@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Tic Tac Toe</title>
+</head>
+<body>
+    <h2>Create Tic Tac Toe Game</h2>
+    <form id="createGameForm">
+        <label>Opponent Email:</label>
+        <input type="email" id="opponent" placeholder="opponent@example.com"><br><br>
+        
+        <label>Time Limit (minutes):</label>
+        <input type="number" id="time" value="10"><br><br>
+        
+        <button type="submit">Create & Play</button>
+        <button type="button" onclick="location.href='../../games.html'">Cancel</button>
+    </form>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwdB75Cn_ilx-KySp-gA7k6djUlJlHM6OitIqEfHYjJrY0UYB-ssXwO6VGfyDCIOzDKRg/exec";
+
+        document.getElementById('createGameForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const payload = {
+                action: 'createGame',
+                userId: localStorage.getItem('userId'),
+                gameName: 'tictactoe',
+                opponent: document.getElementById('opponent').value,
+                time: document.getElementById('time').value
+            };
+
+            const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await response.json();
+            
+            if(result.success) {
+                // Set the game ID for this specific game type in local storage
+                localStorage.setItem('currentGameId_tictactoe', result.gameId);
+                window.location.href = 'play.html';
+            } else {
+                alert("Failed to create game.");
+            }
+        });
+    </script>
+</body>
+</html>
