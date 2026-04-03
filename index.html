@@ -24,7 +24,12 @@
         
         document.querySelectorAll("button").forEach((item) => {
             item.addEventListener("click", () => {
-                window.open(item.id.split("-")[0] + ".html");
+                if (item.id.split("-")[0] === "logout") {
+                    localStorage.clear();
+                    window.open("index.html", "_self");
+                } else {
+                    window.open(item.id.split("-")[0] + ".html", "_self");
+                }
             });
         });
         
