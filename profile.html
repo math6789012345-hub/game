@@ -4,7 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        #nav-bar {
+            display: fixed;
+            border-bottom: 5px solid black;
+        }
+        #links {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+            font-size: 2rem;
+            padding: 5px;
+        }
+        .active {
+            color: green;
+        }
         #profile-picture-container {
             width: 100%;
             margin: 5% auto;
@@ -30,6 +49,15 @@
     </style>
 </head>
 <body>
+    <div id="nav-bar">
+        <div id="links">
+            <a href="index.html"><i class="fa-solid fa-home"></i></a>
+            <a href="profile.html"><i class="fa-solid fa-user active"></i></a>
+            <a href="games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a href="play.html"><i class="fa-solid fa-play"></i></a>
+            <a href="settings.html"><i class="fa-solid fa-gear"></i></a>
+        </div>
+    </div>
     <div>
         <div id="profile-picture-container">
             <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRo6M_85ShvLPdSJ5NDU9AoPeZBJZ5zOGIyYpFIqv-2mA&s" alt="photo" id="profile-picture">
@@ -38,23 +66,6 @@
         <div id="data-container">
             <h1 id="name">name</h1>
             <span id="email">Email: ?@?.?</span>
-        </div>
-        <div id="input-container">
-            <h2>Update Profile</h2>
-            <label>Photo:</label>
-            <input type="image" id="change-photo">
-            <br>
-            <label>Name:</label>
-            <input type="text" id="change-name">
-            <br>
-            <label>New Password:</label>
-            <input type="password" id="new-password">
-            <br>
-            <label>Confirm Password:</label>
-            <input type="password" id="confirm-password">
-            <br>
-            <label>Password:</label>
-            <input type="password" id="password">
         </div>
     </div>
     <script type="module">
@@ -88,33 +99,8 @@
             }
         }
 
-        async function addFirebaseData(path, dataObj, overwrite = false) {
-            const dbRef = ref(db, path);
-            if (!overwrite) {
-                const snapshot = await get(dbRef);
-                if (snapshot.exists()) return "Data already exists! (Overwrite is false)";
-            }
-            await set(dbRef, dataObj);
-            return "Data added successfully!";
-        }
-
-        async function updateFirebaseData(path, dataObj, addData = false) {
-            const dbRef = ref(db, path);
-            if (!addData) {
-                const snapshot = await get(dbRef);
-                if (!snapshot.exists()) return "Cannot update! Node doesn't exist and addData is false.";
-            }
-            await update(dbRef, dataObj);
-            return "Data updated successfully!";
-        }
-
-        async function removeFirebaseData(path) {
-            const dbRef = ref(db, path);
-            await remove(dbRef);
-            return "Data removed successfully!";
-        }
-        
         // --- data
+        
         document.addEventListener("DOMContentLoaded", async () => {
             if (localStorage.getItem("userId") === null) {
                 alert("Login");
