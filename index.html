@@ -3,14 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gaming Portal</title>
+    <title>Page title</title>
 </head>
 <body>
-    <h1>Welcome to the Gaming Portal</h1>
-    <nav>
-        <button onclick="location.href='login.html'">Login</button>
-        <button onclick="location.href='register.html'">Register</button>
-        <button onclick="location.href='games.html'">Browse Games</button>
-    </nav>
+    <div id="buttons-container">
+        <button id="register-button">Register</button>
+        <button id="login-button">Login</button>
+        <button id="profile-button">Profile</button>
+        <button id="logout-button">Logout</button>
+        <button id="games-button">Games</button>
+        <button id="play-button">Play</button>
+    </div>
+    <script>
+        let registerButton = document.querySelector("#register-button");
+        let loginButton = document.querySelector("#login-button");
+        let profileButton = document.querySelector("#profile-button");
+        let logoutButton = document.querySelector("#logout-button");
+        let gamesButton = document.querySelector("#games-button");
+        let playButton = document.querySelector("#play-button");
+        
+        document.querySelectorAll("button").forEach((item) => {
+            item.addEventListener("click", () => {
+                window.open(item.id.split("-")[0] + ".html");
+            });
+        });
+        
+        if (localStorage.getItem("userId") === null) {
+            profileButton.style.display = "none";
+            logoutButton.style.display = "none";
+            gamesButton.style.display = "none";
+            playButton.style.display = "none";
+        } else {
+            registerButton.style.display = "none";
+            loginButton.style.display = "none";
+        }
+    </script>
 </body>
 </html>
