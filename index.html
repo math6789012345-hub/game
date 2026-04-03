@@ -4,8 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Page title</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        #nav-bar {
+            display: fixed;
+            border-bottom: 5px solid black;
+        }
+        #links {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+            font-size: 2rem;
+            padding: 5px;
+        }
+        .active {
+            color: green;
+        }
+    </style>
 </head>
 <body>
+    <div id="nav-bar">
+        <div id="links">
+            <a href="index.html"><i class="fa-solid fa-home active"></i></a>
+            <a href="profile.html"><i class="fa-solid fa-user"></i></a>
+            <a href="games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a href="play.html"><i class="fa-solid fa-play"></i></a>
+            <a href="settings.html"><i class="fa-solid fa-gear"></i></a>
+        </div>
+    </div>
     <div id="buttons-container">
         <button id="register-button">Register</button>
         <button id="login-button">Login</button>
