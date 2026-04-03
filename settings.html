@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        #nav-bar {
+            position: sticky;
+            top: 0px;
+            background-color: white;
+            border-bottom: 5px solid black;
+        }
+        #nav-links {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+        }
+        .nav-link {
+            text-decoration: none;
+            color: inherit;
+            font-size: 2rem;
+            padding: 5px;
+        }
+        .nav-active {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div id="nav-bar">
+        <div id="nav-links">
+            <a class="nav-link" href="index.html"><i class="fa-solid fa-home"></i></a>
+            <a class="nav-link" href="profile.html"><i class="fa-solid fa-user"></i></a>
+            <a class="nav-link" href="games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a class="nav-link" href="play.html"><i class="fa-solid fa-play"></i></a>
+            <a class="nav-link nav-active" href="settings.html"><i class="fa-solid fa-gear"></i></a>
+        </div>
+    </div>
+    
+</body>
+</html>
