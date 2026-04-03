@@ -2,49 +2,112 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
+    <title>Page title</title>
 </head>
 <body>
-    <h2>Register</h2>
-    <form id="registerForm">
-        <input type="text" id="name" placeholder="Name" required><br><br>
-        <input type="email" id="email" placeholder="Email" required><br><br>
-        <input type="password" id="password" placeholder="Password" required><br><br>
-        <input type="password" id="confirmPassword" placeholder="Confirm Password" required><br><br>
-        <button type="submit">Register</button>
-    </form>
+    <div id="register-container">
+        <div class="input-container" id="">
+            <label>Name:</label>
+            <br>
+            <input id="name" type="text">
+        </div>
+        <div class="input-container" id="">
+            <label>Email:</label>
+            <br>
+            <input id="email" type="email">
+        </div>
+        <div class="input-container" id="">
+            <label>Create Password:</label>
+            <br>
+            <input id="password" type="password">
+        </div>
+        <div class="input-container" id="">
+            <label>Confirm Password:</label>
+            <br>
+            <input id="confirm-password" type="password">
+        </div>
+        <div class="button-container" id="">
+            <span>Have an account? <a href="login.html">Login</a></span>
+    </div>
+            <button id="register-button">Register</button>
+        </div>
+    </div>
+    <script type="module">
+        // 1. Import Firebase from CDNs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-    <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwdB75Cn_ilx-KySp-gA7k6djUlJlHM6OitIqEfHYjJrY0UYB-ssXwO6VGfyDCIOzDKRg/exec";
+        // FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
+            authDomain: "data-7c972.firebaseapp.com",
+            databaseURL: "https://data-7c972-default-rtdb.firebaseio.com",
+            projectId: "data-7c972",
+            storageBucket: "data-7c972.firebasestorage.app",
+            messagingSenderId: "628115358338",
+            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
+            measurementId: "G-RQX36JBB1Z"
+        };
 
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const pass = document.getElementById('password').value;
-            if (pass !== document.getElementById('confirmPassword').value) {
-                return alert("Passwords do not match!");
-            }
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-            const payload = {
-                action: 'register',
-                name: document.getElementById('name').value,
-                email: document.getElementById('email').value,
-                password: pass
-            };
+        // --- CRUD Functions
 
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-            
-            if (result.success) {
-                alert("Registered successfully!");
-                window.location.href = 'login.html';
+        async function getFirebaseData(path) {
+            const dbRef = ref(db, path);
+            const snapshot = await get(dbRef);
+            if (snapshot.exists()) {
+                return snapshot.val();
             } else {
-                alert("Error registering.");
+                return "No data available at this path.";
+            }
+        }
+
+        async function addFirebaseData(path, dataObj, overwrite = false) {
+            const dbRef = ref(db, path);
+            if (!overwrite) {
+                const snapshot = await get(dbRef);
+                if (snapshot.exists()) return "Data already exists! (Overwrite is false)";
+            }
+            await set(dbRef, dataObj);
+            return "Data added successfully!";
+        }
+
+        // --- Register
+        
+        let registerButton = document.querySelector("#register-button");
+        registerButton.addEventListener("click", async () => {
+            let name = document.querySelector("#name").value;
+            let email = document.querySelector("#email").value;
+            let password = document.querySelector("#password").value;
+            let confirmPassword = document.querySelector("#confirm-password").value;
+            let id = crypto.randomUUID();
+            if (name && email && password && password === confirmPassword) {
+                let users = await getFirebaseData("data/project/game/users");
+                if (!users || !(Object.values(users).some(user => user.email === email))) {
+                    addFirebaseData("data/project/game/users/" + id, {
+                        "name": name,
+                        "email": email,
+                        "password": password}
+                    ).then((success) => {
+                        alert(success);
+                        window.open("login.html", "_self");
+                    }).catch((error) => {
+                        alert(error);
+                    });
+                } else {
+                    alert("Account existed with this email")
+                }
+            } else {
+                alert("Fill all input field");
             }
         });
+        
+        if (localStorage.getItem("userId") !== null) {
+            window.open("play.html", "_self");
+        }
     </script>
 </body>
-</html>
+    </html>
