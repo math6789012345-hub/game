@@ -3,23 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browse Games</title>
+    <title>Page title</title>
+    <style>
+        #games-container {
+            margin: 10px;
+            border: 2px solid green;
+            border-radius: 20px;
+            padding: 20px;
+            background-color: #00000011;
+            box-shadow: 0 0 10px black;
+        }
+        .game {
+            margin: 10px;
+            border: 2px solid #0000ff;
+            border-radius: 10px;
+            padding: 20px;
+            background-color: #0000ff22;
+            text-align: center;
+            box-shadow: 0 0 10px black;
+        }
+        .game:hover {
+            margin: 0px;
+        }
+        .game-description {
+            font-size: 1.25rem;
+        }
+        .game-create-button, .game-play-button {
+            font-size: 1.25rem;
+            width: 35%;
+            padding: 5px;
+            margin: 5%;
+        }
+    </style>
 </head>
 <body>
-    <h2>Available Games</h2>
-    <nav>
-        <button onclick="location.href='profile/games.html'">My Games</button>
-        <button onclick="location.href='profile.html'">My Profile</button>
-    </nav>
-    <hr>
-    
-    <h3>Tic Tac Toe</h3>
-    <button onclick="location.href='games/tictactoe/create.html'">Create Game</button>
-    
-    <h3>Sudoku</h3>
-    <button onclick="location.href='games/sudoku/create.html'">Create Game</button>
-    
-    <h3>Guessing Game</h3>
-    <button onclick="location.href='games/guessing/create.html'">Create Game</button>
+    <a href="play.html">Previous Games</a>
+    <div id="games-container">
+        <div class="game" id="game-tic-tac-toe">
+            <h1 class="game-name">Tic Tac Toe</h1>
+            <p class="game-description">tic tac toe</p>
+            <button class="game-play-button">Play</button>
+            <button class="game-create-button">Create</button>
+        </div>
+        <div class="game" id="game-ludo">
+            <h1 class="game-name">?</h1>
+            <p class="game-description">?</p>
+            <button class="game-play-button">Play</button>
+            <button class="game-create-button">Create</button>
+        </div>
+        <div class="game" id="game-ludo">
+            <h1 class="game-name">?</h1>
+            <p class="game-description">?</p>
+            <button class="game-play-button">Play</button>
+            <button class="game-create-button">Create</button>
+        </div>
+        <div class="game" id="game-ludo">
+            <h1 class="game-name">?</h1>
+            <p class="game-description">?</p>
+            <button class="game-play-button">Play</button>
+            <button class="game-create-button">Create</button>
+        </div>
+        <div class="game" id="game-ludo">
+            <h1 class="game-name">?</h1>
+            <p class="game-description">?</p>
+            <button class="game-play-button">Play</button>
+            <button class="game-create-button">Create</button>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll(".game-create-button").forEach((item) => {
+            item.addEventListener("click", () => {
+                window.open("games/" + item.parentElement.id.slice(5) + ".html", "_self");
+            });
+        });
+        document.querySelectorAll(".game-play-button").forEach((item) => {
+            item.addEventListener("click", () => {
+                window.open("play/" + item.parentElement.id.slice(5) + ".html", "_self");
+            });
+        });
+    </script>
 </body>
 </html>
