@@ -22,6 +22,7 @@
             border: 2px solid #333; display: flex; align-items: center;
             justify-content: center; font-size: 4rem; font-weight: 800; cursor: pointer;
         }
+        .square:hover { background-color: #eee; }
     </style>
 </head>
 <body>
@@ -68,6 +69,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // --- State Management ---
         let userId = localStorage.getItem("userId");
         let gameId = localStorage.getItem("gameId-tic-tac-toe");
         let playerNum = 0; 
@@ -76,29 +78,14 @@
         let color = "";
         let board = [["", "", ""], ["", "", ""], ["", "", ""]];
         let isUpdating = false; 
-        let gameWinner = null;
 
-        // --- Winner Logic ---
-        function checkWinner(b) {
-            const lines = [
-                [[0,0], [0,1], [0,2]], [[1,0], [1,1], [1,2]], [[2,0], [2,1], [2,2]], // Rows
-                [[0,0], [1,0], [2,0]], [[0,1], [1,1], [2,1]], [[0,2], [1,2], [2,2]], // Cols
-                [[0,0], [1,1], [2,2]], [[0,2], [1,1], [2,0]]              // Diagonals
-            ];
-            for (let line of lines) {
-                const [a, b_pos, c] = line;
-                if (b[a[0]][a[1]] && b[a[0]][a[1]] === b[b_pos[0]][b_pos[1]] && b[a[0]][a[1]] === b[c[0]][c[1]]) {
-                    return b[a[0]][a[1]]; 
-                }
-            }
-            return b.flat().includes("") ? null : "draw";
-        }
-
+        // --- Database Helpers ---
         async function updateFirebaseGame(dataObj) {
             const dbRef = ref(db, `data/project/game/games/${gameId}/data`);
             await update(dbRef, dataObj);
         }
 
+        // --- UI Updates ---
         function updateUI(boardData) {
             for (let i = 0; i < 3; i++) {
                 for (let j = 0; j < 3; j++) {
@@ -108,25 +95,26 @@
                 }
             }
             const display = document.getElementById("turn-display");
-            if (gameWinner) {
-                display.innerText = gameWinner === "draw" ? "It's a Draw!" : (gameWinner === `player ${playerNum}` ? "You Won!" : "You Lost!");
-                display.style.color = "blue";
+            if (currentTurn === playerNum) {
+                display.innerText = "Your Turn";
+                display.style.color = "green";
             } else {
-                display.innerText = (currentTurn === playerNum) ? "Your Turn" : "Opponent's Turn";
-                display.style.color = (currentTurn === playerNum) ? "green" : "red";
+                display.innerText = "Opponent's Turn";
+                display.style.color = "red";
             }
         }
 
+        // --- Real-time Logic ---
         function startSync() {
             const gameRef = ref(db, `data/project/game/games/${gameId}/data`);
             onValue(gameRef, (snapshot) => {
-                if (isUpdating) return; 
+                if (isUpdating) return; // Prevent loop during own move
                 
                 if (snapshot.exists()) {
                     const gameData = snapshot.val();
                     board = gameData.board;
-                    gameWinner = gameData.winner || null;
                     
+                    // Determine turn based on move count
                     const flatBoard = board.flat().filter(cell => cell !== "");
                     currentTurn = (flatBoard.length % 2 === 0) ? 1 : 2;
                     
@@ -135,17 +123,23 @@
             });
         }
 
+        // --- Game Actions ---
         for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
                 const square = document.querySelector(`#square-${i+1}${j+1}`);
                 square.addEventListener("click", async () => {
-                    if (gameWinner) return; // Game over
                     if (currentTurn === playerNum && board[i][j] === "") {
                         isUpdating = true;
                         
+                        // 1. Calculate Move Number
                         const moveCount = board.flat().filter(c => c !== "").length + 1;
-                        board[i][j] = symbol;
                         
+                        // 2. Update local state
+                        board[i][j] = symbol;
+                        currentTurn = (playerNum === 1) ? 2 : 1;
+                        updateUI(board);
+
+                        // 3. Update Database (Board + Move log)
                         const updates = {};
                         updates["board"] = board;
                         updates[`moves/move_${moveCount}`] = {
@@ -155,29 +149,19 @@
                             time: Date.now()
                         };
 
-                        // Check for win locally before sending
-                        const result = checkWinner(board);
-                        if (result) {
-                            if (result === "draw") {
-                                updates["winner"] = "draw";
-                            } else {
-                                updates["winner"] = `player ${playerNum}`;
-                            }
-                        }
-
-                        currentTurn = (playerNum === 1) ? 2 : 1;
-                        updateUI(board);
-
                         await updateFirebaseGame(updates);
                         isUpdating = false;
+                    } else if (currentTurn !== playerNum) {
+                        alert("Not your turn!");
                     }
                 });
             }
         }
 
+        // --- Startup ---
         window.addEventListener("DOMContentLoaded", async () => {
             if (!userId || !gameId) {
-                alert("Session Error.");
+                alert("Session Error. Please log in.");
                 window.location.href = "../login.html";
                 return;
             }
