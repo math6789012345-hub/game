@@ -72,15 +72,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- DOM Elements ---
-        const pathInput = document.getElementById('pathInput');
-        const dataInput = document.getElementById('dataInput');
-        const outputDiv = document.getElementById('output');
-
-        function printOutput(message) {
-            outputDiv.textContent = typeof message === 'object' ? JSON.stringify(message, null, 2) : message;
-        }
-
         // --- CRUD Functions (From previous step) ---
 
         async function getFirebaseData(path) {
@@ -91,16 +82,6 @@
             } else {
                 return "No data available at this path.";
             }
-        }
-
-        async function updateFirebaseData(path, dataObj, addData = false) {
-            const dbRef = ref(db, path);
-            if (!addData) {
-                const snapshot = await get(dbRef);
-                if (!snapshot.exists()) return "Cannot update! Node doesn't exist and addData is false.";
-            }
-            await update(dbRef, dataObj);
-            return "Data updated successfully!";
         }
 
         async function removeFirebaseData(path) {
@@ -150,9 +131,6 @@
                 });
             }
         });
-        
-        
-        
     </script>
 </body>
 </html>
