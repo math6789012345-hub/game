@@ -133,7 +133,7 @@
                 let users = await getFirebaseData("data/project/game/users");
                 let p2;
                 for (let [id, data] of Object.entries(users)) {
-                    if (p2Email !== data.email) {
+                    if (p2Email === data.email) {
                         p2 = id;
                         break;
                     }
@@ -156,7 +156,8 @@
                             ["", "", ""],
                             ["", "", ""],
                             ["", "", ""]
-                        ]
+                        ],
+                        "winner": 0
                     }
                 }).then((success) => {
                     alert(success);
