@@ -31,11 +31,11 @@
 <body>
     <div id="nav-bar">
         <div id="nav-links">
-            <a class="nav-link" href="index.html"><i class="fa-solid fa-home"></i></a>
-            <a class="nav-link" href="profile.html"><i class="fa-solid fa-user"></i></a>
-            <a class="nav-link nav-active" href="games.html"><i class="fa-solid fa-gamepad"></i></a>
-            <a class="nav-link" href="play.html"><i class="fa-solid fa-play"></i></a>
-            <a class="nav-link" href="settings.html"><i class="fa-solid fa-gear"></i></a>
+            <a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
+            <a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
+            <a class="nav-link nav-active" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a class="nav-link" href="../play.html"><i class="fa-solid fa-play"></i></a>
+            <a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
         </div>
     </div>
     <div id="container">
@@ -161,7 +161,7 @@
                 }).then((success) => {
                     alert(success);
                     localStorage.setItem("gameId-tic-tac-toe", gameId);
-                    window.open("play/tic-tac-toe.html", "_self");
+                    window.open("../play/tic-tac-toe.html", "_self");
                 }).catch((error) => {
                     alert(error);
                 });
@@ -171,7 +171,7 @@
         });
         
         if (localStorage.getItem("userId") === null) {
-            window.open("login.html", "_self");
+            window.open("../login.html", "_self");
         }
     </script>
 </body>
