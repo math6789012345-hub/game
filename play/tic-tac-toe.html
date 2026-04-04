@@ -77,12 +77,30 @@
         let symbol = "";
         let color = "";
         let board = [["", "", ""], ["", "", ""], ["", "", ""]];
-        let isUpdating = false; 
+        let isUpdating = false;
+        let gameWinner = null; // Track if the game has been won locally
 
         // --- Database Helpers ---
         async function updateFirebaseGame(dataObj) {
             const dbRef = ref(db, `data/project/game/games/${gameId}/data`);
             await update(dbRef, dataObj);
+        }
+
+        // --- Win Logic ---
+        function checkWin(b) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (b[i][0] && b[i][0] === b[i][1] && b[i][1] === b[i][2]) return b[i][0];
+            }
+            // Check columns
+            for (let j = 0; j < 3; j++) {
+                if (b[0][j] && b[0][j] === b[1][j] && b[1][j] === b[2][j]) return b[0][j];
+            }
+            // Check diagonals
+            if (b[0][0] && b[0][0] === b[1][1] && b[1][1] === b[2][2]) return b[0][0];
+            if (b[0][2] && b[0][2] === b[1][1] && b[1][1] === b[2][0]) return b[0][2];
+            
+            return null;
         }
 
         // --- UI Updates ---
@@ -94,7 +112,30 @@
                     if (boardData[i][j] === symbol) square.style.color = color;
                 }
             }
+            
             const display = document.getElementById("turn-display");
+            
+            // Check if game is over before updating turns
+            if (gameWinner) {
+                if (gameWinner === `player ${playerNum}`) {
+                    display.innerText = "You Won!";
+                    display.style.color = "green";
+                } else {
+                    display.innerText = "Opponent Won!";
+                    display.style.color = "red";
+                }
+                return;
+            }
+
+            // Check for draw
+            const isDraw = boardData.flat().filter(cell => cell !== "").length === 9;
+            if (isDraw) {
+                display.innerText = "It's a Draw!";
+                display.style.color = "orange";
+                return;
+            }
+
+            // Standard turn display
             if (currentTurn === playerNum) {
                 display.innerText = "Your Turn";
                 display.style.color = "green";
@@ -112,7 +153,13 @@
                 
                 if (snapshot.exists()) {
                     const gameData = snapshot.val();
-                    board = gameData.board;
+                    
+                    if (gameData.board) board = gameData.board;
+                    
+                    // Sync winner state from DB
+                    if (gameData.winner) {
+                        gameWinner = gameData.winner;
+                    }
                     
                     // Determine turn based on move count
                     const flatBoard = board.flat().filter(cell => cell !== "");
@@ -128,6 +175,12 @@
             for (let j = 0; j < 3; j++) {
                 const square = document.querySelector(`#square-${i+1}${j+1}`);
                 square.addEventListener("click", async () => {
+                    // Block moves if the game already has a winner
+                    if (gameWinner) {
+                        alert("Game over! " + gameWinner + " has already won.");
+                        return;
+                    }
+
                     if (currentTurn === playerNum && board[i][j] === "") {
                         isUpdating = true;
                         
@@ -136,10 +189,18 @@
                         
                         // 2. Update local state
                         board[i][j] = symbol;
-                        currentTurn = (playerNum === 1) ? 2 : 1;
+                        
+                        // Check if this move resulted in a win
+                        const winningSymbol = checkWin(board);
+                        if (winningSymbol) {
+                            gameWinner = `player ${playerNum}`; // Set winner locally
+                        } else {
+                            currentTurn = (playerNum === 1) ? 2 : 1; // Only pass turn if no win
+                        }
+                        
                         updateUI(board);
 
-                        // 3. Update Database (Board + Move log)
+                        // 3. Update Database (Board, Move log, and Winner if applicable)
                         const updates = {};
                         updates["board"] = board;
                         updates[`moves/move_${moveCount}`] = {
@@ -148,6 +209,11 @@
                             symbol: symbol,
                             time: Date.now()
                         };
+                        
+                        // If there is a winner, update the database field
+                        if (gameWinner) {
+                            updates["winner"] = gameWinner; // "player 1" or "player 2"
+                        }
 
                         await updateFirebaseGame(updates);
                         isUpdating = false;
@@ -169,6 +235,12 @@
             const snap = await get(ref(db, `data/project/game/games/${gameId}`));
             if (snap.exists()) {
                 const game = snap.val();
+                
+                // Load existing winner if game is already complete
+                if (game.data.winner) {
+                    gameWinner = game.data.winner;
+                }
+
                 if (game.data.player1.id === userId) {
                     playerNum = 1;
                     symbol = game.data.player1.symbol;
