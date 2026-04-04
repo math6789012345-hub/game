@@ -6,60 +6,23 @@
     <title>Play Tic Tac Toe</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        #nav-bar {
-            position: sticky;
-            top: 0px;
-            background-color: white;
-            border-bottom: 5px solid black;
-            z-index: 100;
-        }
-        #nav-links {
-            width: 100%;
-            display: flex;
-            justify-content: space-around;
-        }
-        .nav-link {
-            text-decoration: none;
-            color: inherit;
-            font-size: 2rem;
-            padding: 5px;
-        }
-        .nav-active {
-            color: green;
-        }
-        #show-player-turn {
-            text-align: center;
-            font-size: 2rem;
-            font-weight: bold;
-            margin-top: 20px;
-        }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+        #nav-bar { position: sticky; top: 0; background-color: white; border-bottom: 5px solid black; z-index: 100; }
+        #nav-links { width: 100%; display: flex; justify-content: space-around; }
+        .nav-link { text-decoration: none; color: inherit; font-size: 2rem; padding: 10px; }
+        .nav-active { color: green; }
+        #show-player-turn { text-align: center; font-size: 1.8rem; font-weight: bold; margin: 20px 0; }
         #tic-tac-toe-container {
-            width: 90vw;
-            height: 90vw;
-            max-width: 500px;
-            max-height: 500px;
-            border: 2.5px solid black;
-            margin: 20px auto;
-            display: flex;
-            flex-wrap: wrap;
+            width: 90vw; height: 90vw; max-width: 450px; max-height: 450px;
+            border: 3px solid black; margin: 0 auto; display: flex; flex-wrap: wrap;
+            background-color: white;
         }
         .square {
-            box-sizing: border-box;
-            width: 33.33%;
-            height: 33.33%;
-            border: 2.5px solid black;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 5rem;
-            font-weight: 600;
-            cursor: pointer;
+            box-sizing: border-box; width: 33.33%; height: 33.33%;
+            border: 2px solid #333; display: flex; align-items: center;
+            justify-content: center; font-size: 4rem; font-weight: 800; cursor: pointer;
         }
+        .square:hover { background-color: #eee; }
     </style>
 </head>
 <body>
@@ -74,7 +37,7 @@
     </div>
     
     <div id="show-player-turn">
-        <span id="turn-display">Loading Game...</span>
+        <span id="turn-display">Initializing...</span>
     </div>
 
     <div id="tic-tac-toe-container">
@@ -90,11 +53,9 @@
     </div>
 
     <script type="module">
-        // Import Firebase from CDNs (Added onValue for continuous listening)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getDatabase, ref, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-        // FIREBASE CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
             authDomain: "data-7c972.firebaseapp.com",
@@ -102,156 +63,112 @@
             projectId: "data-7c972",
             storageBucket: "data-7c972.firebasestorage.app",
             messagingSenderId: "628115358338",
-            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
-            measurementId: "G-RQX36JBB1Z"
+            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // State Variables
+        // --- State Management ---
         let userId = localStorage.getItem("userId");
         let gameId = localStorage.getItem("gameId-tic-tac-toe");
-        let playerNum = 0; // 1 for Player1, 2 for Player2
-        let currentTurn = 1; // 1 if it's Player 1's turn, 2 if Player 2's turn
+        let playerNum = 0; 
+        let currentTurn = 1; 
         let symbol = "";
         let color = "";
-        let board = [
-            ["", "", ""],
-            ["", "", ""],
-            ["", "", ""]
-        ];
-        
-        // Flag to stop listening to incoming data while actively making a move
+        let board = [["", "", ""], ["", "", ""], ["", "", ""]];
         let isUpdating = false; 
 
-        // --- Firebase Helper Functions ---
-        async function getFirebaseData(path) {
-            const dbRef = ref(db, path);
-            const snapshot = await get(dbRef);
-            if (snapshot.exists()) {
-                return snapshot.val();
-            } else {
-                return null;
-            }
-        }
-
-        async function updateFirebaseData(path, dataObj) {
-            const dbRef = ref(db, path);
+        // --- Database Helpers ---
+        async function updateFirebaseGame(dataObj) {
+            const dbRef = ref(db, `data/project/game/games/${gameId}/data`);
             await update(dbRef, dataObj);
-            return "Data updated successfully!";
         }
 
-        // --- Core UI Functions ---
-        function updateBoardUI(data) {
+        // --- UI Updates ---
+        function updateUI(boardData) {
             for (let i = 0; i < 3; i++) {
                 for (let j = 0; j < 3; j++) {
-                    let square = document.querySelector(`#square-${i+1}${j+1}`);
-                    square.innerText = data[i][j];
-                    // Optional: color coding based on player
-                    if(data[i][j] === symbol) {
-                        square.style.color = color;
-                    } else {
-                        square.style.color = "black"; // Or opposing player's color
-                    }
+                    const square = document.querySelector(`#square-${i+1}${j+1}`);
+                    square.innerText = boardData[i][j];
+                    if (boardData[i][j] === symbol) square.style.color = color;
                 }
             }
-        }
-
-        function updateTurnUI() {
-            const turnDisplay = document.getElementById("turn-display");
+            const display = document.getElementById("turn-display");
             if (currentTurn === playerNum) {
-                turnDisplay.innerText = "Your Turn!";
-                turnDisplay.style.color = "green";
+                display.innerText = "Your Turn";
+                display.style.color = "green";
             } else {
-                turnDisplay.innerText = "Opponent's Turn...";
-                turnDisplay.style.color = "red";
+                display.innerText = "Opponent's Turn";
+                display.style.color = "red";
             }
         }
 
-        // --- Realtime Listener ---
-        function listenToGameUpdates() {
-            const gameRef = ref(db, "data/project/game/games/" + gameId);
-            
-            // onValue continuously watches for changes in the database
+        // --- Real-time Logic ---
+        function startSync() {
+            const gameRef = ref(db, `data/project/game/games/${gameId}/data`);
             onValue(gameRef, (snapshot) => {
-                // "When a player move don't get data" - Ignore updates if we are actively pushing a move
-                if (isUpdating) return; 
-
+                if (isUpdating) return; // Prevent loop during own move
+                
                 if (snapshot.exists()) {
-                    let gameInfo = snapshot.val();
-                    let p1Symbol = gameInfo.data.player1.symbol;
-                    let p2Symbol = gameInfo.data.player2.symbol;
+                    const gameData = snapshot.val();
+                    board = gameData.board;
                     
-                    board = gameInfo.data.board;
-
-                    // Calculate whose turn it is based on board pieces
-                    let p1Moves = board.flat().filter(char => char === p1Symbol).length;
-                    let p2Moves = board.flat().filter(char => char === p2Symbol).length;
-
-                    // Assuming Player 1 goes first, if moves are equal, it's P1's turn
-                    currentTurn = (p1Moves === p2Moves) ? 1 : 2;
-
-                    updateBoardUI(board);
-                    updateTurnUI();
+                    // Determine turn based on move count
+                    const flatBoard = board.flat().filter(cell => cell !== "");
+                    currentTurn = (flatBoard.length % 2 === 0) ? 1 : 2;
+                    
+                    updateUI(board);
                 }
             });
         }
 
-        // --- Attach Click Listeners to Board ---
+        // --- Game Actions ---
         for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
-                let square = document.querySelector(`#square-${i+1}${j+1}`);
+                const square = document.querySelector(`#square-${i+1}${j+1}`);
                 square.addEventListener("click", async () => {
-                    // Check if it's the player's turn
-                    if (currentTurn === playerNum) {
-                        // Check if the square is empty
-                        if (board[i][j] === "") {
-                            
-                            // 1. Pause incoming data
-                            isUpdating = true; 
+                    if (currentTurn === playerNum && board[i][j] === "") {
+                        isUpdating = true;
+                        
+                        // 1. Calculate Move Number
+                        const moveCount = board.flat().filter(c => c !== "").length + 1;
+                        
+                        // 2. Update local state
+                        board[i][j] = symbol;
+                        currentTurn = (playerNum === 1) ? 2 : 1;
+                        updateUI(board);
 
-                            // 2. Update local state optimistically for instant feedback
-                            board[i][j] = symbol;
-                            currentTurn = (playerNum === 1) ? 2 : 1; // Swap turn locally
-                            
-                            updateBoardUI(board);
-                            updateTurnUI();
+                        // 3. Update Database (Board + Move log)
+                        const updates = {};
+                        updates["board"] = board;
+                        updates[`moves/move_${moveCount}`] = {
+                            player: playerNum,
+                            pos: `${i},${j}`,
+                            symbol: symbol,
+                            time: Date.now()
+                        };
 
-                            // 3. Push to Firebase
-                            await updateFirebaseData("data/project/game/games/" + gameId + "/data/board", board);
-                            
-                            // 4. Resume incoming data
-                            isUpdating = false; 
-
-                        } else {
-                            alert("Invalid Move: Square is already taken!");
-                        }
-                    } else {
-                        alert("Please wait for your opponent's turn!");
+                        await updateFirebaseGame(updates);
+                        isUpdating = false;
+                    } else if (currentTurn !== playerNum) {
+                        alert("Not your turn!");
                     }
                 });
             }
         }
 
-        // --- Initialization ---
-        document.addEventListener("DOMContentLoaded", async () => {
-            if (userId === null) {
-                alert("Login required.");
+        // --- Startup ---
+        window.addEventListener("DOMContentLoaded", async () => {
+            if (!userId || !gameId) {
+                alert("Session Error. Please log in.");
                 window.location.href = "../login.html";
                 return;
             }
-            if (gameId === null) {
-                alert("No game found.");
-                window.location.href = "../play.html";
-                return;
-            }
 
-            // Fetch initial game data to figure out which player the user is
-            let game = await getFirebaseData("data/project/game/games/" + gameId);
-            
-            if (game && game.data) {
+            const snap = await get(ref(db, `data/project/game/games/${gameId}`));
+            if (snap.exists()) {
+                const game = snap.val();
                 if (game.data.player1.id === userId) {
                     playerNum = 1;
                     symbol = game.data.player1.symbol;
@@ -261,11 +178,7 @@
                     symbol = game.data.player2.symbol;
                     color = game.data.player2.color;
                 }
-                
-                // Start listening continuously for opponent moves
-                listenToGameUpdates();
-            } else {
-                alert("Game data could not be found.");
+                startSync();
             }
         });
     </script>
