@@ -3,28 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic Tac Toe</title>
+    <title>Play Tic Tac Toe</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        #nav-bar {
-            position: sticky;
-            top: 0px;
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+        #nav-bar { position: sticky; top: 0; background-color: white; border-bottom: 5px solid black; z-index: 100; }
+        #nav-links { width: 100%; display: flex; justify-content: space-around; }
+        .nav-link { text-decoration: none; color: inherit; font-size: 2rem; padding: 10px; }
+        .nav-active { color: green; }
+        #show-player-turn { text-align: center; font-size: 1.8rem; font-weight: bold; margin: 20px 0; }
+        #tic-tac-toe-container {
+            width: 90vw; height: 90vw; max-width: 450px; max-height: 450px;
+            border: 3px solid black; margin: 0 auto; display: flex; flex-wrap: wrap;
             background-color: white;
-            border-bottom: 5px solid black;
         }
-        #nav-links {
-            width: 100%;
-            display: flex;
-            justify-content: space-around;
-        }
-        .nav-link {
-            text-decoration: none;
-            color: inherit;
-            font-size: 2rem;
-            padding: 5px;
-        }
-        .nav-active {
-            color: green;
+        .square {
+            box-sizing: border-box; width: 33.33%; height: 33.33%;
+            border: 2px solid #333; display: flex; align-items: center;
+            justify-content: center; font-size: 4rem; font-weight: 800; cursor: pointer;
         }
     </style>
 </head>
@@ -33,43 +29,32 @@
         <div id="nav-links">
             <a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
             <a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
-            <a class="nav-link nav-active" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
-            <a class="nav-link" href="../play.html"><i class="fa-solid fa-play"></i></a>
+            <a class="nav-link" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a class="nav-link nav-active" href="../play.html"><i class="fa-solid fa-play"></i></a>
             <a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
         </div>
     </div>
-    <div id="container">
-        <div class="input" id="">
-            <label>Your Symbol</label>
-            <select id="p1-symbol">
-                <option>×</option>
-                <option>o</option>
-            </select>
-        </div>
-        <div class="input" id="">
-            <label>Your Color</label>
-            <input type="color" id="p1-color" value="#00ff00">
-        </div>
-        <div class="input" id="">
-            <label>Player 2 Color</label>
-            <input type="color" id="p2-color" value="#ff0000">
-        </div>
-        <div class="input" id="">
-            <label>Player 2</label>
-            <select id="p2">
-                <option></option>
-            </select>
-        </div>
-        <div class="" id="">
-            <button id="create-button">Create Game</button>
-        </div>
+    
+    <div id="show-player-turn">
+        <span id="turn-display">Initializing...</span>
     </div>
-    <script type="module">
-        // Import Firebase from CDNs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-        // FIREBASE CONFIGURATION
+    <div id="tic-tac-toe-container">
+        <div class="square" id="square-11"></div>
+        <div class="square" id="square-12"></div>
+        <div class="square" id="square-13"></div>
+        <div class="square" id="square-21"></div>
+        <div class="square" id="square-22"></div>
+        <div class="square" id="square-23"></div>
+        <div class="square" id="square-31"></div>
+        <div class="square" id="square-32"></div>
+        <div class="square" id="square-33"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
             authDomain: "data-7c972.firebaseapp.com",
@@ -77,103 +62,141 @@
             projectId: "data-7c972",
             storageBucket: "data-7c972.firebasestorage.app",
             messagingSenderId: "628115358338",
-            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
-            measurementId: "G-RQX36JBB1Z"
+            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- CRUD Functions (From previous step) ---
+        let userId = localStorage.getItem("userId");
+        let gameId = localStorage.getItem("gameId-tic-tac-toe");
+        let playerNum = 0; 
+        let currentTurn = 1; 
+        let symbol = "";
+        let color = "";
+        let board = [["", "", ""], ["", "", ""], ["", "", ""]];
+        let isUpdating = false; 
+        let gameWinner = null;
 
-        async function getFirebaseData(path) {
-            const dbRef = ref(db, path);
-            const snapshot = await get(dbRef);
-            if (snapshot.exists()) {
-                return snapshot.val();
+        // --- Winner Logic ---
+        function checkWinner(b) {
+            const lines = [
+                [[0,0], [0,1], [0,2]], [[1,0], [1,1], [1,2]], [[2,0], [2,1], [2,2]], // Rows
+                [[0,0], [1,0], [2,0]], [[0,1], [1,1], [2,1]], [[0,2], [1,2], [2,2]], // Cols
+                [[0,0], [1,1], [2,2]], [[0,2], [1,1], [2,0]]              // Diagonals
+            ];
+            for (let line of lines) {
+                const [a, b_pos, c] = line;
+                if (b[a[0]][a[1]] && b[a[0]][a[1]] === b[b_pos[0]][b_pos[1]] && b[a[0]][a[1]] === b[c[0]][c[1]]) {
+                    return b[a[0]][a[1]]; 
+                }
+            }
+            return b.flat().includes("") ? null : "draw";
+        }
+
+        async function updateFirebaseGame(dataObj) {
+            const dbRef = ref(db, `data/project/game/games/${gameId}/data`);
+            await update(dbRef, dataObj);
+        }
+
+        function updateUI(boardData) {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const square = document.querySelector(`#square-${i+1}${j+1}`);
+                    square.innerText = boardData[i][j];
+                    if (boardData[i][j] === symbol) square.style.color = color;
+                }
+            }
+            const display = document.getElementById("turn-display");
+            if (gameWinner) {
+                display.innerText = gameWinner === "draw" ? "It's a Draw!" : (gameWinner === `player ${playerNum}` ? "You Won!" : "You Lost!");
+                display.style.color = "blue";
             } else {
-                return "No data available at this path.";
+                display.innerText = (currentTurn === playerNum) ? "Your Turn" : "Opponent's Turn";
+                display.style.color = (currentTurn === playerNum) ? "green" : "red";
             }
         }
 
-        async function addFirebaseData(path, dataObj, overwrite = false) {
-            const dbRef = ref(db, path);
-            if (!overwrite) {
-                const snapshot = await get(dbRef);
-                if (snapshot.exists()) return "Data already exists! (Overwrite is false)";
-            }
-            await set(dbRef, dataObj);
-            return "Data added successfully!";
+        function startSync() {
+            const gameRef = ref(db, `data/project/game/games/${gameId}/data`);
+            onValue(gameRef, (snapshot) => {
+                if (isUpdating) return; 
+                
+                if (snapshot.exists()) {
+                    const gameData = snapshot.val();
+                    board = gameData.board;
+                    gameWinner = gameData.winner || null;
+                    
+                    const flatBoard = board.flat().filter(cell => cell !== "");
+                    currentTurn = (flatBoard.length % 2 === 0) ? 1 : 2;
+                    
+                    updateUI(board);
+                }
+            });
         }
 
-        // --- add data
-        
-        document.addEventListener("DOMContentLoaded", async () => {
-            let users = await getFirebaseData("data/project/game/users");
-            for (let [id, data] of Object.entries(users)) {
-                if (id !== localStorage.getItem("userId")) {
-                    let option = document.createElement("option");
-                    option.innerText = data.email;
-                    document.querySelector("#p2").appendChild(option);
-                }
-            }
-        });
-        
-        // --- create game
-        
-        document.querySelector("#create-button").addEventListener("click", async () => {
-            let p1Symbol = document.querySelector("#p1-symbol").value
-            let p1Color = document.querySelector("#p1-color").value
-            let p2Color = document.querySelector("#p2-color").value
-            let p2Email = document.querySelector("#p2").value
-            if (p2Email) {
-                let gameId = crypto.randomUUID();
-                let p1 = localStorage.getItem("userId");
-                let users = await getFirebaseData("data/project/game/users");
-                let p2;
-                for (let [id, data] of Object.entries(users)) {
-                    if (p2Email === data.email) {
-                        p2 = id;
-                        break;
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                const square = document.querySelector(`#square-${i+1}${j+1}`);
+                square.addEventListener("click", async () => {
+                    if (gameWinner) return; // Game over
+                    if (currentTurn === playerNum && board[i][j] === "") {
+                        isUpdating = true;
+                        
+                        const moveCount = board.flat().filter(c => c !== "").length + 1;
+                        board[i][j] = symbol;
+                        
+                        const updates = {};
+                        updates["board"] = board;
+                        updates[`moves/move_${moveCount}`] = {
+                            player: playerNum,
+                            pos: `${i},${j}`,
+                            symbol: symbol,
+                            time: Date.now()
+                        };
+
+                        // Check for win locally before sending
+                        const result = checkWinner(board);
+                        if (result) {
+                            if (result === "draw") {
+                                updates["winner"] = "draw";
+                            } else {
+                                updates["winner"] = `player ${playerNum}`;
+                            }
+                        }
+
+                        currentTurn = (playerNum === 1) ? 2 : 1;
+                        updateUI(board);
+
+                        await updateFirebaseGame(updates);
+                        isUpdating = false;
                     }
-                }
-                addFirebaseData("data/project/game/games/" + gameId, {
-                    "timeStamp": Date.now(),
-                    "game": "tic tac toe",
-                    "data": {
-                        "player1": {
-                            "id": p1,
-                            "symbol": p1Symbol,
-                            "color": p1Color
-                        },
-                        "player2": {
-                            "id": p2,
-                            "symbol": p1Symbol === "×" ? "o" : "×",
-                            "color": p2Color
-                        },
-                        "winner": "none",
-                        "board": [
-                            ["", "", ""],
-                            ["", "", ""],
-                            ["", "", ""]
-                        ]
-                    }
-                }).then((success) => {
-                    alert(success);
-                    localStorage.setItem("gameId-tic-tac-toe", gameId);
-                    window.open("../play/tic-tac-toe.html", "_self");
-                }).catch((error) => {
-                    alert(error);
                 });
-            } else {
-                alert("Fill all input field");
+            }
+        }
+
+        window.addEventListener("DOMContentLoaded", async () => {
+            if (!userId || !gameId) {
+                alert("Session Error.");
+                window.location.href = "../login.html";
+                return;
+            }
+
+            const snap = await get(ref(db, `data/project/game/games/${gameId}`));
+            if (snap.exists()) {
+                const game = snap.val();
+                if (game.data.player1.id === userId) {
+                    playerNum = 1;
+                    symbol = game.data.player1.symbol;
+                    color = game.data.player1.color;
+                } else {
+                    playerNum = 2;
+                    symbol = game.data.player2.symbol;
+                    color = game.data.player2.color;
+                }
+                startSync();
             }
         });
-        
-        if (localStorage.getItem("userId") === null) {
-            window.open("../login.html", "_self");
-        }
     </script>
 </body>
 </html>
