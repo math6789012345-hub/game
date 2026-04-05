@@ -48,6 +48,15 @@
             <a class="nav-link" href="settings.html"><i class="fa-solid fa-gear"></i></a>
         </div>
     </div>
+    <div>
+        <br>
+        <a href="games.html">Create Game</a>
+        <br><br>
+    </div>
+    <div>
+        <span id="game-count">Searching...</span>
+        <br><br>
+    </div>
     <div id="games-container">
         
     </div>
@@ -92,20 +101,22 @@
         
         // --- add data
         
-        
         document.addEventListener("DOMContentLoaded", async () => {
             if (localStorage.getItem("userId") === null) {
                 alert("Login");
                 window.open("login.html", "_self");
             } else {
+                let gameCount = document.querySelector("#game-count");
                 let games = await getFirebaseData("data/project/game/games");
-                                
+                let count = 0;
                 let userId = localStorage.getItem("userId");
                 let gamesContainer = document.querySelector("#games-container");
                 for (let [id, data] of Object.entries(games)) {
                     let player1 = await getFirebaseData("data/project/game/users/" + data.data.player1.id);
                     let player2 = await getFirebaseData("data/project/game/users/" + data.data.player2.id);
                     if (data.data.player1.id === userId || data.data.player2.id === userId) {
+                        count++;
+                        gameCount.innerText = "Showing " + count + "/? Games";
                         gamesContainer.innerHTML += `<div class="game-container" id="game-${id}">
             <span class="game-name">Game: ${data.game}</span>
             <br>
@@ -123,6 +134,7 @@
         </div>`;
                     }
                 }
+                gameCount.innerText = "Showing " + count + "/" + count + " Games";
                 document.querySelectorAll(".game-container").forEach(item => {
                     document.querySelector("#" + item.id + " button").addEventListener("click", () => {
                         localStorage.setItem("gameId-" + document.querySelector("#" + item.id + " .game-name").innerText.toLowerCase().split(": ")[1].replaceAll(" ", "-"), item.id.slice(5));
