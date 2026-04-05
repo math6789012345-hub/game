@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Play</title>
+    <title>Games</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         #nav-bar {
@@ -27,14 +27,33 @@
             color: green;
         }
         #games-container {
-            border: 1px solid black;
-            border-radius: 10px;
-        }
-        .game-container {
-            border: 1px solid black;
-            border-radius: 10px;
-            padding: 10px;
             margin: 10px;
+            border: 2px solid green;
+            border-radius: 20px;
+            padding: 20px;
+            background-color: #00000011;
+            box-shadow: 0 0 10px black;
+        }
+        .game {
+            margin: 10px;
+            border: 2px solid #0000ff;
+            border-radius: 10px;
+            padding: 20px;
+            background-color: #0000ff22;
+            text-align: center;
+            box-shadow: 0 0 10px black;
+        }
+        .game:hover {
+            margin: 0px;
+        }
+        .game-description {
+            font-size: 1.25rem;
+        }
+        .game-create-button, .game-play-button {
+            font-size: 1.25rem;
+            width: 35%;
+            padding: 5px;
+            margin: 5%;
         }
     </style>
 </head>
@@ -43,93 +62,53 @@
         <div id="nav-links">
             <a class="nav-link" href="index.html"><i class="fa-solid fa-home"></i></a>
             <a class="nav-link" href="profile.html"><i class="fa-solid fa-user"></i></a>
-            <a class="nav-link" href="games.html"><i class="fa-solid fa-gamepad"></i></a>
-            <a class="nav-link nav-active" href="play.html"><i class="fa-solid fa-play"></i></a>
+            <a class="nav-link nav-active" href="games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a class="nav-link" href="play.html"><i class="fa-solid fa-play"></i></a>
             <a class="nav-link" href="settings.html"><i class="fa-solid fa-gear"></i></a>
         </div>
     </div>
     <div id="games-container">
-        
-    </div>
-    <script type="module">
-        // Import Firebase from CDNs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-
-        // FIREBASE CONFIGURATION
-        const firebaseConfig = {
-            apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
-            authDomain: "data-7c972.firebaseapp.com",
-            databaseURL: "https://data-7c972-default-rtdb.firebaseio.com",
-            projectId: "data-7c972",
-            storageBucket: "data-7c972.firebasestorage.app",
-            messagingSenderId: "628115358338",
-            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
-            measurementId: "G-RQX36JBB1Z"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // --- CRUD Functions (From previous step) ---
-
-        async function getFirebaseData(path) {
-            const dbRef = ref(db, path);
-            const snapshot = await get(dbRef);
-            if (snapshot.exists()) {
-                return snapshot.val();
-            } else {
-                return "No data available at this path.";
-            }
-        }
-
-        async function removeFirebaseData(path) {
-            const dbRef = ref(db, path);
-            await remove(dbRef);
-            return "Data removed successfully!";
-        }
-        
-        // --- add data
-        
-        
-        document.addEventListener("DOMContentLoaded", async () => {
-            if (localStorage.getItem("userId") === null) {
-                alert("Login");
-                window.open("login.html", "_self");
-            } else {
-                let games = await getFirebaseData("data/project/game/games");
-                                
-                let userId = localStorage.getItem("userId");
-                let gamesContainer = document.querySelector("#games-container");
-                for (let [id, data] of Object.entries(games)) {
-                    let player1 = await getFirebaseData("data/project/game/users/" + data.data.player1.id);
-                    let player2 = await getFirebaseData("data/project/game/users/" + data.data.player2.id);
-                    if (data.data.player1.id === userId || data.data.player2.id === userId) {
-                        gamesContainer.innerHTML += `<div class="game-container" id="game-${id}">
-            <span class="game-name">Game: ${data.game}</span>
-            <br>
-            <span class="game-id">Id: ${id}</span>
-            <br>
-            <span class="game-time">Time: ${new Date(data.timeStamp)}</span>
-            <br>
-            <span class="game-players">Player 1: ${player1.name}</span>
-            <br>
-            <span class="game-players">Player 2: ${player2.name}</span>
-            <br>
-            <span class="game-winner">Winner: ${data.data.winner}</span>
-            <br>
+        <div class="game" id="game-tic-tac-toe">
+            <h1 class="game-name">Tic Tac Toe</h1>
+            <p class="game-description">tic tac toe</p>
             <button class="game-play-button">Play</button>
-        </div>`;
-                    }
-                }
-                document.querySelectorAll(".game-container").forEach(item => {
-                    document.querySelector("#" + item.id + " button").addEventListener("click", () => {
-                        localStorage.setItem("gameId-" + document.querySelector("#" + item.id + " .game-name").innerText.toLowerCase().split(": ")[1].replaceAll(" ", "-"), item.id.slice(5));
-                        window.open("play/" + document.querySelector("#" + item.id + " .game-name").innerText.toLowerCase().split(": ")[1].replaceAll(" ", "-") + ".html", "_self");
-                    });
-                });
-            }
+            <button class="game-create-button">Create</button>
+        </div>
+        <div class="game" id="game-dots-and-boxes">
+            <h1 class="game-name">Dots and Boxes</h1>
+            <p class="game-description">dots and boxes</p>
+            <button class="game-play-button">Play</button>
+            <button class="game-create-button">Create</button>
+        </div>
+        <div class="game" id="game-ludo">
+            <h1 class="game-name">?</h1>
+            <p class="game-description">?</p>
+            <button class="game-play-button">Play</button>
+            <button class="game-create-button">Create</button>
+        </div>
+        <div class="game" id="game-ludo">
+            <h1 class="game-name">?</h1>
+            <p class="game-description">?</p>
+            <button class="game-play-button">Play</button>
+            <button class="game-create-button">Create</button>
+        </div>
+        <div class="game" id="game-ludo">
+            <h1 class="game-name">?</h1>
+            <p class="game-description">?</p>
+            <button class="game-play-button">Play</button>
+            <button class="game-create-button">Create</button>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll(".game-create-button").forEach((item) => {
+            item.addEventListener("click", () => {
+                window.open("games/" + item.parentElement.id.slice(5) + ".html", "_self");
+            });
+        });
+        document.querySelectorAll(".game-play-button").forEach((item) => {
+            item.addEventListener("click", () => {
+                window.open("play/" + item.parentElement.id.slice(5) + ".html", "_self");
+            });
         });
     </script>
 </body>
