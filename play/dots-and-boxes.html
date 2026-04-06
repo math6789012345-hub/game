@@ -45,7 +45,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f7f6;
             color: #333;
-            margin: 0; /* Reset margin for full-width nav */
+            margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
@@ -53,13 +53,13 @@
             min-height: 100vh;
         }
 
-        /* Wrapper for game content to maintain spacing below the nav */
         #content {
             display: flex;
             flex-direction: column;
-            align-items: left;
+            align-items: center;
             padding: 20px;
             width: 100%;
+            max-width: 100vw;
             box-sizing: border-box;
         }
 
@@ -73,7 +73,7 @@
             justify-content: space-between;
             width: 100%;
             max-width: 400px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             padding: 15px;
             background: #fff;
             border-radius: 8px;
@@ -98,21 +98,47 @@
         #status-bar {
             font-size: 1.2rem;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             text-transform: uppercase;
+        }
+
+        /* --- Board Controls & Wrapper --- */
+        .controls-container {
+            margin-bottom: 15px;
+            background: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #board-wrapper {
+            width: 100%;
+            max-width: 95vw;
+            max-height: 60vh;
+            overflow: auto; /* Allows scrolling for huge boards */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         /* CSS Grid powers the board alignment */
         #board-container {
-            overflow-x: scroll;
-            overflow-y: scroll;
-            height: 80vw;
             display: grid;
             background-color: #fff;
             padding: 15px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             user-select: none;
+            /* Grid gaps ensure no ghosting on scaling */
+            grid-gap: 0px; 
+            margin: auto;
         }
 
         .dot { background: #2c3e50; border-radius: 50%; }
@@ -128,6 +154,17 @@
         .box {
             background: transparent;
             transition: background 0.3s;
+        }
+
+        /* --- Opponent Last Move Animation --- */
+        @keyframes pulseLastMove {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .last-move-anim {
+            animation: pulseLastMove 1.2s infinite;
         }
 
         #winner-screen {
@@ -149,8 +186,8 @@
         <div id="nav-links">
             <a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
             <a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
-            <a class="nav-link nav-active" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
-            <a class="nav-link" href="../play.html"><i class="fa-solid fa-play"></i></a>
+            <a class="nav-link" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a class="nav-link nav-active" href="../play.html"><i class="fa-solid fa-play"></i></a>
             <a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
         </div>
     </div>
@@ -172,7 +209,15 @@
             </div>
         </div>
 
-        <div id="board-container"></div>
+        <label class="controls-container">
+            <input type="checkbox" id="fit-cb" checked onchange="calculateSizes()">
+            Fit Board to Screen
+        </label>
+
+        <div id="board-wrapper">
+            <div id="board-container"></div>
+        </div>
+        
         <div id="winner-screen"></div>
     </div>
 
@@ -207,14 +252,17 @@
         const gameRefPath = `data/project/game/games/${gameId}/data`;
         const gameRef = db.ref(gameRefPath);
 
-        // Constants for board drawing
-        const DOT_SIZE = 15;
-        const LINE_LENGTH = 60;
+        // Game/Display State
+        let dotSize = 15;
+        let lineLength = 60;
         
-        // Game State variables
         let gameData = null;
-        let currentPlayerNum = 0; // 1 for Player 1, 2 for Player 2, 0 for Spectator
-        let boardState = []; // [hLines, vLines, boxes, turn]
+        let currentPlayerNum = 0; 
+        let boardState = []; // Previous locally known state
+        let lastMove = null; // { type: 0/1, idx: number, player: number }
+
+        // Recalculate sizes on window resize
+        window.addEventListener('resize', () => { if(gameData) calculateSizes() });
 
         // ==========================================
         // 3. LISTEN TO DATABASE CHANGES
@@ -227,27 +275,43 @@
 
             gameData = snapshot.val();
             
-            // Identify current user
-            if (userId === gameData.player1.id) {
-                currentPlayerNum = 1;
-            } else if (userId === gameData.player2.id) {
-                currentPlayerNum = 2;
-            }
+            if (userId === gameData.player1.id) currentPlayerNum = 1;
+            else if (userId === gameData.player2.id) currentPlayerNum = 2;
 
-            // Update UI elements
             document.getElementById('p1-color').style.backgroundColor = gameData.player1.color;
             document.getElementById('p2-color').style.backgroundColor = gameData.player2.color;
 
-            // Initialize board structure in DB if empty (only player 1 does this to prevent race condition)
             if (!gameData.board || gameData.board.length === 0) {
-                if (currentPlayerNum === 1) {
-                    initializeBoardDb();
-                }
+                if (currentPlayerNum === 1) initializeBoardDb();
                 return;
             }
 
-            boardState = gameData.board;
-            renderBoard();
+            const newBoardState = gameData.board;
+
+            // DETECT THE LAST MOVE BY COMPARING OLD STATE TO NEW STATE
+            if (boardState.length > 0) {
+                let foundDiff = null;
+                // Check Horizontal Lines
+                for (let i = 0; i < newBoardState[0].length; i++) {
+                    if (boardState[0][i] === 0 && newBoardState[0][i] !== 0) {
+                        foundDiff = { type: 0, idx: i, player: newBoardState[0][i] };
+                        break;
+                    }
+                }
+                // Check Vertical Lines
+                if (!foundDiff) {
+                    for (let i = 0; i < newBoardState[1].length; i++) {
+                        if (boardState[1][i] === 0 && newBoardState[1][i] !== 0) {
+                            foundDiff = { type: 1, idx: i, player: newBoardState[1][i] };
+                            break;
+                        }
+                    }
+                }
+                if (foundDiff) lastMove = foundDiff;
+            }
+
+            boardState = newBoardState;
+            calculateSizes(); // Triggers renderBoard
             updateScoresAndStatus();
         });
 
@@ -259,27 +323,56 @@
             const vLen = gameData.row * (gameData.column + 1);
             const bLen = gameData.row * gameData.column;
             
-            // structure: [hLines array, vLines array, boxes array, turn number]
             const initialBoard = [
                 new Array(hLen).fill(0),
                 new Array(vLen).fill(0),
                 new Array(bLen).fill(0),
-                1 // Player 1 starts
+                1 
             ];
-            
             gameRef.child('board').set(initialBoard);
         }
 
+        // Dynamically calculate sizes to fit the screen
+        function calculateSizes() {
+            const fit = document.getElementById('fit-cb').checked;
+            const wrapper = document.getElementById('board-wrapper');
+            
+            if (fit && gameData) {
+                // Buffer space for paddings
+                const availW = wrapper.clientWidth - 20; 
+                const availH = window.innerHeight * 0.50; 
+                
+                // Base requirement at default sizes
+                const reqW = (gameData.column * 60) + ((gameData.column + 1) * 15);
+                const reqH = (gameData.row * 60) + ((gameData.row + 1) * 15);
+                
+                // Find scaling factor
+                const scaleW = availW / reqW;
+                const scaleH = availH / reqH;
+                const scale = Math.max(0.3, Math.min(1, scaleW, scaleH)); // Clamp scale
+                
+                dotSize = 15 * scale;
+                lineLength = 60 * scale;
+            } else {
+                dotSize = 15;
+                lineLength = 60;
+            }
+            
+            renderBoard();
+        }
+
         function renderBoard() {
+            if(!gameData || boardState.length === 0) return;
+
             const container = document.getElementById('board-container');
             container.innerHTML = '';
             
             const rows = gameData.row;
             const cols = gameData.column;
             
-            // Set up CSS Grid explicitly for the dynamic size
-            container.style.gridTemplateColumns = `repeat(${cols}, ${DOT_SIZE}px ${LINE_LENGTH}px) ${DOT_SIZE}px`;
-            container.style.gridTemplateRows = `repeat(${rows}, ${DOT_SIZE}px ${LINE_LENGTH}px) ${DOT_SIZE}px`;
+            // Set grid using dynamic dotSize and lineLength
+            container.style.gridTemplateColumns = `repeat(${cols}, ${dotSize}px ${lineLength}px) ${dotSize}px`;
+            container.style.gridTemplateRows = `repeat(${rows}, ${dotSize}px ${lineLength}px) ${dotSize}px`;
 
             const hLines = boardState[0];
             const vLines = boardState[1];
@@ -303,6 +396,10 @@
                         if (hLines[idx] !== 0) {
                             el.classList.add('played');
                             el.style.backgroundColor = getPlayerColor(hLines[idx]);
+                            // Add Animation if it was the opponent's last move
+                            if (lastMove && lastMove.type === 0 && lastMove.idx === idx && lastMove.player !== currentPlayerNum) {
+                                el.classList.add('last-move-anim');
+                            }
                         } else {
                             el.onclick = () => handleLineClick(0, idx);
                         }
@@ -317,6 +414,10 @@
                         if (vLines[idx] !== 0) {
                             el.classList.add('played');
                             el.style.backgroundColor = getPlayerColor(vLines[idx]);
+                            // Add Animation if it was the opponent's last move
+                            if (lastMove && lastMove.type === 1 && lastMove.idx === idx && lastMove.player !== currentPlayerNum) {
+                                el.classList.add('last-move-anim');
+                            }
                         } else {
                             el.onclick = () => handleLineClick(1, idx);
                         }
@@ -329,7 +430,6 @@
                         const idx = gridR * cols + gridC;
                         
                         if (boxes[idx] !== 0) {
-                            // Render box ownership color with 50% opacity
                             el.style.backgroundColor = getPlayerColor(boxes[idx]) + '80'; 
                         }
                     }
@@ -345,22 +445,17 @@
         }
 
         function handleLineClick(type, idx) {
-            // Check if game is over, or if spectator, or if not player's turn
             if (gameData.winner || currentPlayerNum === 0 || boardState[3] !== currentPlayerNum) return;
 
-            // Clone state to mutate and update DB
             let newState = JSON.parse(JSON.stringify(boardState));
             newState[type][idx] = currentPlayerNum;
 
-            // Check if any boxes were completed
             let scored = updateBoxes(newState);
 
-            // If no box was completed, turn passes to next player
             if (!scored) {
                 newState[3] = (currentPlayerNum === 1) ? 2 : 1;
             }
 
-            // Calculate current scores
             const p1Score = newState[2].filter(b => b === 1).length;
             const p2Score = newState[2].filter(b => b === 2).length;
             const totalBoxes = gameData.row * gameData.column;
@@ -368,14 +463,12 @@
             let updates = {};
             updates[`board`] = newState;
 
-            // Check End Game Condition
             if (p1Score + p2Score === totalBoxes) {
                 if (p1Score > p2Score) updates['winner'] = "player 1";
                 else if (p2Score > p1Score) updates['winner'] = "player 2";
                 else updates['winner'] = "draw";
             }
 
-            // Push move to database
             gameRef.update(updates);
         }
 
@@ -392,7 +485,6 @@
                 for (let c = 0; c < cols; c++) {
                     const boxIdx = r * cols + c;
                     
-                    // If box is currently empty, check its 4 boundaries
                     if (boxes[boxIdx] === 0) {
                         const top = hLines[r * cols + c] !== 0;
                         const bottom = hLines[(r + 1) * cols + c] !== 0;
@@ -400,7 +492,7 @@
                         const right = vLines[r * (cols + 1) + (c + 1)] !== 0;
 
                         if (top && bottom && left && right) {
-                            boxes[boxIdx] = currentPlayerNum; // Claim the box
+                            boxes[boxIdx] = currentPlayerNum; 
                             boxCompletedInThisMove = true;
                         }
                     }
