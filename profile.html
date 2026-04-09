@@ -70,6 +70,11 @@
             <span id="email">Email: ?@?.?</span>
         </div>
     </div>
+    <br>
+    <div>
+        <button id="settings-button">Settings</button>
+        <button id="logout-button">Logout</button>
+    </div>
     <script type="module">
         // Import Firebase from CDNs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -112,6 +117,15 @@
                 document.querySelector("#name").innerText = user.name;
                 document.querySelector("#email").innerText = "Email: " + user.email;
             }
+        });
+        
+        document.querySelector("#settings-button").addEventListener("click", () => {
+            window.open("settings.html", "_self");
+        });
+        
+        document.querySelector("#logout-button").addEventListener("click", () => {
+            localStorage.clear();
+            window.open("login.html", "_self");
         });
     </script>
 </body>
