@@ -38,6 +38,125 @@
             <a class="nav-link nav-active" href="settings.html"><i class="fa-solid fa-gear"></i></a>
         </div>
     </div>
-    
+    <div id="settings-container">
+        <div>
+            <div>
+                <span>Change Theme: </span>
+                <button id="theme">Theme</button>
+            </div>
+        </div>
+        <div>
+            <div class="input-container" id="">
+                <label>Name:</label>
+                <br>
+                <input id="name" type="text">
+            </div>
+            <div class="input-container" id="">
+                <label>Profile Photo:</label>
+                <br>
+                <input type="file" name="profile-photo" id="profile-photo" accept="image/png, image/jpeg, image/webp">
+            </div>
+            <div class="button-container" id="">
+                <button id="update-button">Update</button>
+            </div>
+        </div>
+    </div>
+    <script type="module">
+        // Import Firebase from CDNs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
+            authDomain: "data-7c972.firebaseapp.com",
+            databaseURL: "https://data-7c972-default-rtdb.firebaseio.com",
+            projectId: "data-7c972",
+            storageBucket: "data-7c972.firebasestorage.app",
+            messagingSenderId: "628115358338",
+            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
+            measurementId: "G-RQX36JBB1Z"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- CRUD Functions (From previous step) ---
+
+        async function getFirebaseData(path) {
+            const dbRef = ref(db, path);
+            const snapshot = await get(dbRef);
+            if (snapshot.exists()) {
+                return snapshot.val();
+            } else {
+                return "No data available at this path.";
+            }
+        }
+
+        async function updateFirebaseData(path, dataObj, addData = false) {
+            const dbRef = ref(db, path);
+            if (!addData) {
+                const snapshot = await get(dbRef);
+                if (!snapshot.exists()) return "Cannot update! Node doesn't exist and addData is false.";
+            }
+            await update(dbRef, dataObj);
+            return "Data updated successfully!";
+        }
+
+        // --- data
+        
+        let theme = localStorage.getItem("theme") || "light";
+        if (theme === "light") {
+            document.querySelector("#theme").style.backgroundColor = "white";
+            document.querySelector("#theme").style.color = "black";
+            document.querySelector("#theme").innerText = "Light";
+        } else {
+            document.querySelector("#theme").style.backgroundColor = "black";
+            document.querySelector("#theme").style.color = "white";
+            document.querySelector("#theme").innerText = "Dark";
+        }
+        document.querySelector("#theme").addEventListener("click", () => {
+            if (document.querySelector("#theme").innerText.toLowerCase() === "light") {
+                document.querySelector("#theme").style.backgroundColor = "black";
+                document.querySelector("#theme").style.color = "white";
+                document.querySelector("#theme").innerText = "Dark";
+                localStorage.setItem("theme", "dark");
+            } else {
+                document.querySelector("#theme").style.backgroundColor = "white";
+                document.querySelector("#theme").style.color = "black";
+                document.querySelector("#theme").innerText = "Light";
+                localStorage.setItem("theme", "light");
+            }
+        });
+        
+        document.addEventListener("DOMContentLoaded", async () => {
+            if (localStorage.getItem("userId") === null) {
+                alert("Login");
+                window.open("login.html", "_self");
+            } else {
+                let user = await getFirebaseData("data/project/game/users/" + localStorage.getItem("userId"));
+                document.querySelector("#name").value = user.name;
+                if (user.profilePhoto) {
+                    document.querySelector("#profile-photo").value = user.profilePhoto
+                }
+            }
+        });
+        
+        document.querySelector("#update-button").addEventListener("click", () => {
+            updateFirebaseData("data/project/game/users/" + localStorage.getItem("userId"), {name: document.querySelector("#name").value}).then((success) => {
+                alert(success);
+            }).catch((error) => {
+                alert(error);
+            });
+            if (document.querySelector("#profile-photo").value) {
+                updateFirebaseData("data/project/game/users/" + localStorage.getItem("userId"), {profilePhoto: document.querySelector("#profile-photo").value}, true).then((success) => {
+                    alert(success);
+                }).catch((error) => {
+                    alert(error);
+                });
+            }
+        });
+    </script>
 </body>
 </html>
