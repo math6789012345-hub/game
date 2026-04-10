@@ -6,16 +6,26 @@
     <title>Settings</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        :root {
+            --theme-color: black;
+            --theme-background-color: white;
+            --theme-nav-color: #eee;
+            --theme-nav-active-color: lightgreen;
+        }
+        body {
+            color: var(--theme-color);
+            background-color: var(--theme-background-color);
+        }
         #nav-bar {
             position: sticky;
             top: 0px;
-            background-color: white;
-            border-bottom: 5px solid black;
+            border-bottom: 5px solid var(--theme-nav-color);
         }
         #nav-links {
             width: 100%;
             display: flex;
             justify-content: space-around;
+            color: var(--theme-nav-color);
         }
         .nav-link {
             text-decoration: none;
@@ -24,7 +34,10 @@
             padding: 5px;
         }
         .nav-active {
-            color: green;
+            color: var(--theme-nav-active-color);
+        }
+        input {
+            color: var(--theme-color);
         }
     </style>
 </head>
@@ -38,6 +51,7 @@
             <a class="nav-link nav-active" href="settings.html"><i class="fa-solid fa-gear"></i></a>
         </div>
     </div>
+    <br>
     <div id="settings-container">
         <div>
             <div>
@@ -45,7 +59,10 @@
                 <button id="theme">Theme</button>
             </div>
         </div>
+        <br>
         <div>
+            <span>Update Account Info:</span>
+            <br>
             <div class="input-container" id="">
                 <label>Name:</label>
                 <br>
@@ -108,25 +125,42 @@
         
         let theme = localStorage.getItem("theme") || "light";
         if (theme === "light") {
-            document.querySelector("#theme").style.backgroundColor = "white";
-            document.querySelector("#theme").style.color = "black";
-            document.querySelector("#theme").innerText = "Light";
-        } else {
             document.querySelector("#theme").style.backgroundColor = "black";
             document.querySelector("#theme").style.color = "white";
-            document.querySelector("#theme").innerText = "Dark";
+            document.querySelector("#theme").innerText = "Set Dark Theme";
+            document.documentElement.style.setProperty('--theme-color', 'black');
+            document.documentElement.style.setProperty('--theme-background-color', 'white');
+            document.documentElement.style.setProperty('--theme-nav-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'green');
+        } else {
+            document.querySelector("#theme").style.backgroundColor = "white";
+            document.querySelector("#theme").style.color = "black";
+            document.querySelector("#theme").innerText = "Set Light Theme";
+            document.documentElement.style.setProperty('--theme-color', 'white');
+            document.documentElement.style.setProperty('--theme-background-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-color', '#eee');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'lightgreen');
         }
         document.querySelector("#theme").addEventListener("click", () => {
-            if (document.querySelector("#theme").innerText.toLowerCase() === "light") {
-                document.querySelector("#theme").style.backgroundColor = "black";
-                document.querySelector("#theme").style.color = "white";
-                document.querySelector("#theme").innerText = "Dark";
-                localStorage.setItem("theme", "dark");
-            } else {
+            theme = localStorage.getItem("theme") || "light";
+            if (theme === "light") {
                 document.querySelector("#theme").style.backgroundColor = "white";
                 document.querySelector("#theme").style.color = "black";
-                document.querySelector("#theme").innerText = "Light";
+                document.querySelector("#theme").innerText = "Set Light Theme";
+                localStorage.setItem("theme", "dark");
+                document.documentElement.style.setProperty('--theme-color', 'white');
+                document.documentElement.style.setProperty('--theme-background-color', 'black');
+                document.documentElement.style.setProperty('--theme-nav-color', '#eee');
+                document.documentElement.style.setProperty('--theme-nav-active-color', 'lightgreen');
+            } else {
+                document.querySelector("#theme").style.backgroundColor = "black";
+                document.querySelector("#theme").style.color = "white";
+                document.querySelector("#theme").innerText = "Set Dark Theme";
                 localStorage.setItem("theme", "light");
+                document.documentElement.style.setProperty('--theme-color', 'black');
+                document.documentElement.style.setProperty('--theme-background-color', 'white');
+                document.documentElement.style.setProperty('--theme-nav-color', 'black');
+                document.documentElement.style.setProperty('--theme-nav-active-color', 'green');
             }
         });
         
