@@ -6,16 +6,26 @@
     <title>Profile</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        :root {
+            --theme-color: black;
+            --theme-background-color: white;
+            --theme-nav-color: #eee;
+            --theme-nav-active-color: lightgreen;
+        }
+        body {
+            color: var(--theme-color);
+            background-color: var(--theme-background-color);
+        }
         #nav-bar {
             position: sticky;
             top: 0px;
-            background-color: white;
-            border-bottom: 5px solid black;
+            border-bottom: 5px solid var(--theme-nav-color);
         }
         #nav-links {
             width: 100%;
             display: flex;
             justify-content: space-around;
+            color: var(--theme-nav-color);
         }
         .nav-link {
             text-decoration: none;
@@ -24,7 +34,7 @@
             padding: 5px;
         }
         .nav-active {
-            color: green;
+            color: var(--theme-nav-active-color);
         }
         #profile-picture-container {
             width: 100%;
@@ -36,7 +46,7 @@
         #profile-picture {
             width: 50vw;
             height: 50vw;
-            border: 2px solid black;
+            border: 2px solid var(--theme-color);
             border-radius: 50%;
         }
         #data-container {
@@ -46,7 +56,7 @@
             flex-direction: column;
         }
         #name {
-            text-shadow: 0 0 5px green;
+            text-shadow: 0 0 5px var(--theme-nav-active-color);
         }
     </style>
 </head>
@@ -108,6 +118,19 @@
 
         // --- data
         
+        let theme = localStorage.getItem("theme") || "light";
+        if (theme === "light") {
+            document.documentElement.style.setProperty('--theme-color', 'black');
+            document.documentElement.style.setProperty('--theme-background-color', 'white');
+            document.documentElement.style.setProperty('--theme-nav-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'green');
+        } else {
+            document.documentElement.style.setProperty('--theme-color', 'white');
+            document.documentElement.style.setProperty('--theme-background-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-color', '#eee');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'lightgreen');
+        }
+        
         document.addEventListener("DOMContentLoaded", async () => {
             if (localStorage.getItem("userId") === null) {
                 alert("Login");
@@ -116,6 +139,9 @@
                 let user = await getFirebaseData("data/project/game/users/" + localStorage.getItem("userId"));
                 document.querySelector("#name").innerText = user.name;
                 document.querySelector("#email").innerText = "Email: " + user.email;
+                if (user.profilePhoto) {
+                    document.querySelector("#profile-picture").src = user.profilePhoto;
+                }
             }
         });
         
