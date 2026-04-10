@@ -176,7 +176,7 @@
                     
                     let gameWinner = document.createElement("span");
                     gameWinner.classList.add("game-winner");
-                    gameWinner.innerHTML = "Winner: " + (data.data.winner === "player 1" ? player1.name + "won" : data.data.winner === "player 2" ? player2.name + "won": data.data.winner === "draw" ? "Draw" : "Not Found") + "<br>";
+                    gameWinner.innerHTML = "Winner: " + (data.data.winner === "player 1" ? player1.name + " won" : data.data.winner === "player 2" ? player2.name + " won": data.data.winner === "draw" ? "Draw" : "Not Found") + "<br>";
                     gameContainer.appendChild(gameWinner);
                     
                     let gamePlayButton = document.createElement("button");
