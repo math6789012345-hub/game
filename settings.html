@@ -171,9 +171,6 @@
             } else {
                 let user = await getFirebaseData("data/project/game/users/" + localStorage.getItem("userId"));
                 document.querySelector("#name").value = user.name;
-                if (user.profilePhoto) {
-                    document.querySelector("#profile-photo").value = user.profilePhoto
-                }
             }
         });
         
@@ -183,12 +180,18 @@
             }).catch((error) => {
                 alert(error);
             });
-            if (document.querySelector("#profile-photo").value) {
-                updateFirebaseData("data/project/game/users/" + localStorage.getItem("userId"), {profilePhoto: document.querySelector("#profile-photo").value}, true).then((success) => {
-                    alert(success);
-                }).catch((error) => {
-                    alert(error);
-                });
+            const photoInput = document.querySelector("#profile-photo");
+            if (photoInput.files && photoInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const base64Image = e.target.result;
+                    updateFirebaseData("data/project/game/users/" + localStorage.getItem("userId"), {profilePhoto: base64Image}, true).then((success) => {
+                        alert("Profile photo updated!");
+                    }).catch((error) => {
+                        alert("Error: " + error);
+                    });
+                }
+                reader.readAsDataURL(photoInput.files[0]);
             }
         });
     </script>
