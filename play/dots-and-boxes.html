@@ -11,14 +11,42 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
+        /* --- Theme Variables --- */
+        :root {
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --nav-bg: white;
+            --nav-border: black;
+            --card-bg: #fff;
+            --line-unplayed: #ecf0f1;
+            --line-hover: #bdc3c7;
+            --dot-color: #2c3e50;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --shadow-heavy: rgba(0, 0, 0, 0.15);
+        }
+
+        body.dark-theme {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --nav-bg: #1e1e1e;
+            --nav-border: #444;
+            --card-bg: #2a2a2a;
+            --line-unplayed: #3a3a3a;
+            --line-hover: #555;
+            --dot-color: #7f8c8d;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --shadow-heavy: rgba(0, 0, 0, 0.6);
+        }
+
         /* --- Navigation Bar Styles --- */
         #nav-bar {
             position: sticky;
             top: 0px;
-            background-color: white;
-            border-bottom: 5px solid black;
+            background-color: var(--nav-bg);
+            border-bottom: 5px solid var(--nav-border);
             width: 100%;
             z-index: 1000;
+            transition: background-color 0.3s, border-color 0.3s;
         }
         #nav-links {
             width: 100%;
@@ -28,29 +56,30 @@
         }
         .nav-link {
             text-decoration: none;
-            color: inherit;
+            color: var(--text-color);
             font-size: 2rem;
             padding: 5px;
             transition: color 0.2s;
         }
         .nav-link:hover {
-            color: #555;
+            opacity: 0.7;
         }
         .nav-active {
-            color: green;
+            color: #27ae60;
         }
 
         /* --- Global & Game Styles --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         #content {
@@ -75,10 +104,11 @@
             max-width: 400px;
             margin-bottom: 10px;
             padding: 15px;
-            background: #fff;
+            background: var(--card-bg);
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px var(--shadow-color);
             box-sizing: border-box;
+            transition: background-color 0.3s;
         }
 
         .player-card {
@@ -93,6 +123,7 @@
             height: 20px;
             border-radius: 50%;
             margin-top: 5px;
+            border: 1px solid var(--shadow-color);
         }
 
         #status-bar {
@@ -105,22 +136,23 @@
         /* --- Board Controls & Wrapper --- */
         .controls-container {
             margin-bottom: 15px;
-            background: white;
+            background: var(--card-bg);
             padding: 8px 15px;
             border-radius: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px var(--shadow-color);
             display: flex;
             align-items: center;
             gap: 10px;
             font-weight: bold;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
 
         #board-wrapper {
             width: 100%;
             max-width: 95vw;
             max-height: 60vh;
-            overflow: auto; /* Allows scrolling for huge boards */
+            overflow: auto;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -131,25 +163,35 @@
         /* CSS Grid powers the board alignment */
         #board-container {
             display: grid;
-            background-color: #fff;
+            background-color: var(--card-bg);
             padding: 15px;
             border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 10px var(--shadow-heavy);
             user-select: none;
-            /* Grid gaps ensure no ghosting on scaling */
             grid-gap: 0px; 
             margin: auto;
+            transition: background-color 0.3s;
         }
 
-        .dot { background: #2c3e50; border-radius: 50%; }
+        .dot { 
+            background: var(--dot-color); 
+            border-radius: 50%; 
+            transition: background-color 0.3s;
+        }
         
         .hline, .vline {
-            background: #ecf0f1;
+            background: var(--line-unplayed);
             transition: background 0.2s;
         }
         
-        .hline:hover, .vline:hover { background: #bdc3c7; cursor: pointer; }
-        .hline.played, .vline.played { cursor: default; }
+        .hline:hover, .vline:hover { 
+            background: var(--line-hover); 
+            cursor: pointer; 
+        }
+        
+        .hline.played, .vline.played { 
+            cursor: default; 
+        }
 
         .box {
             background: transparent;
@@ -186,8 +228,8 @@
         <div id="nav-links">
             <a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
             <a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
-            <a class="nav-link" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
-            <a class="nav-link nav-active" href="../play.html"><i class="fa-solid fa-play"></i></a>
+            <a class="nav-link nav-active" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a class="nav-link" href="../play.html"><i class="fa-solid fa-play"></i></a>
             <a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
         </div>
     </div>
@@ -222,6 +264,18 @@
     </div>
 
     <script>
+        // ==========================================
+        // 0. THEME INITIALIZATION
+        // ==========================================
+        let currentTheme = localStorage.getItem('theme');
+        if (!currentTheme) {
+            currentTheme = 'light';
+            localStorage.setItem('theme', 'light');
+        }
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+
         // ==========================================
         // 1. FIREBASE CONFIGURATION (REPLACE THIS)
         // ==========================================
@@ -338,18 +392,15 @@
             const wrapper = document.getElementById('board-wrapper');
             
             if (fit && gameData) {
-                // Buffer space for paddings
                 const availW = wrapper.clientWidth - 20; 
                 const availH = window.innerHeight * 0.50; 
                 
-                // Base requirement at default sizes
                 const reqW = (gameData.column * 60) + ((gameData.column + 1) * 15);
                 const reqH = (gameData.row * 60) + ((gameData.row + 1) * 15);
                 
-                // Find scaling factor
                 const scaleW = availW / reqW;
                 const scaleH = availH / reqH;
-                const scale = Math.max(0.3, Math.min(1, scaleW, scaleH)); // Clamp scale
+                const scale = Math.max(0.3, Math.min(1, scaleW, scaleH)); 
                 
                 dotSize = 15 * scale;
                 lineLength = 60 * scale;
@@ -370,7 +421,6 @@
             const rows = gameData.row;
             const cols = gameData.column;
             
-            // Set grid using dynamic dotSize and lineLength
             container.style.gridTemplateColumns = `repeat(${cols}, ${dotSize}px ${lineLength}px) ${dotSize}px`;
             container.style.gridTemplateRows = `repeat(${rows}, ${dotSize}px ${lineLength}px) ${dotSize}px`;
 
@@ -383,11 +433,9 @@
                     const el = document.createElement('div');
                     
                     if (r % 2 === 0 && c % 2 === 0) {
-                        // DOT
                         el.className = 'dot';
                     } 
                     else if (r % 2 === 0 && c % 2 !== 0) {
-                        // HORIZONTAL LINE
                         el.className = 'hline';
                         const gridR = r / 2;
                         const gridC = (c - 1) / 2;
@@ -396,7 +444,6 @@
                         if (hLines[idx] !== 0) {
                             el.classList.add('played');
                             el.style.backgroundColor = getPlayerColor(hLines[idx]);
-                            // Add Animation if it was the opponent's last move
                             if (lastMove && lastMove.type === 0 && lastMove.idx === idx && lastMove.player !== currentPlayerNum) {
                                 el.classList.add('last-move-anim');
                             }
@@ -405,7 +452,6 @@
                         }
                     } 
                     else if (r % 2 !== 0 && c % 2 === 0) {
-                        // VERTICAL LINE
                         el.className = 'vline';
                         const gridR = (r - 1) / 2;
                         const gridC = c / 2;
@@ -414,7 +460,6 @@
                         if (vLines[idx] !== 0) {
                             el.classList.add('played');
                             el.style.backgroundColor = getPlayerColor(vLines[idx]);
-                            // Add Animation if it was the opponent's last move
                             if (lastMove && lastMove.type === 1 && lastMove.idx === idx && lastMove.player !== currentPlayerNum) {
                                 el.classList.add('last-move-anim');
                             }
@@ -423,7 +468,6 @@
                         }
                     } 
                     else if (r % 2 !== 0 && c % 2 !== 0) {
-                        // BOX
                         el.className = 'box';
                         const gridR = (r - 1) / 2;
                         const gridC = (c - 1) / 2;
@@ -441,7 +485,7 @@
         function getPlayerColor(playerNum) {
             if (playerNum === 1) return gameData.player1.color;
             if (playerNum === 2) return gameData.player2.color;
-            return '#ecf0f1';
+            return 'var(--line-unplayed)';
         }
 
         function handleLineClick(type, idx) {
@@ -529,7 +573,7 @@
                     statusBar.style.color = "#27ae60";
                 } else {
                     statusBar.innerText = `Waiting for Player ${turnNum}...`;
-                    statusBar.style.color = "#e74c3c";
+                    statusBar.style.color = currentTheme === 'dark' ? "#ff6b6b" : "#e74c3c";
                 }
             }
         }
