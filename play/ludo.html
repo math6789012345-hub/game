@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Ludo Multiplayer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #f0f0f0;
+            --text-color: #000;
+            --nav-bg: #ffffff;
+            --border-color: #000;
+        }
+
+        body.dark-theme {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --nav-bg: #333333;
+            --border-color: #444;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        /* Provided Nav Bar Style */
+        #nav-bar {
+            position: sticky;
+            top: 0px;
+            background-color: var(--nav-bg);
+            border-bottom: 5px solid var(--border-color);
+            z-index: 1000;
+        }
+        #nav-links {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+        }
+        .nav-link {
+            text-decoration: none;
+            color: inherit;
+            font-size: 2rem;
+            padding: 5px;
+        }
+        .nav-active {
+            color: green;
+        }
+
+        /* Game UI */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #ludo-board {
+            width: 90vw;
+            max-width: 400px;
+            height: 90vw;
+            max-height: 400px;
+            background: white;
+            border: 2px solid #333;
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            grid-template-rows: repeat(15, 1fr);
+        }
+
+        .status-panel {
+            margin-top: 20px;
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(128, 128, 128, 0.1);
+        }
+
+        .dice-btn {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 10px;
+        }
+
+        .dice-btn:disabled {
+            background: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="nav-bar">
+        <div id="nav-links">
+            <a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
+            <a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
+            <a class="nav-link" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a class="nav-link nav-active" href="../play.html"><i class="fa-solid fa-play"></i></a>
+            <a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <h2 id="turn-display">Waiting for players...</h2>
+        <div id="ludo-board">
+            </div>
+
+        <div class="status-panel">
+            <div id="player-info">Loading Game Data...</div>
+            <button id="roll-dice" class="dice-btn" disabled>Roll Dice</button>
+            <div id="dice-result" style="font-size: 2rem; margin-top: 10px;">-</div>
+        </div>
+
+        <div id="leaderboard" style="margin-top: 20px;"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
+            authDomain: "data-7c972.firebaseapp.com",
+            databaseURL: "https://data-7c972-default-rtdb.firebaseio.com",
+            projectId: "data-7c972",
+            storageBucket: "data-7c972.firebasestorage.app",
+            messagingSenderId: "628115358338",
+            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
+            measurementId: "G-RQX36JBB1Z"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // STATE & LOCAL STORAGE
+        const userId = localStorage.getItem("userId") || "guest_" + Math.floor(Math.random()*1000);
+        const gameId = localStorage.getItem("gameId-ludo");
+        const theme = localStorage.getItem("theme") || "light";
+        
+        // Apply Theme
+        if (theme === "dark") document.body.classList.add("dark-theme");
+
+        const gameRef = ref(db, `data/project/game/games/${gameId}/data`);
+
+        // ELEMENTS
+        const turnDisplay = document.getElementById('turn-display');
+        const rollBtn = document.getElementById('roll-dice');
+        const diceRes = document.getElementById('dice-result');
+        const leaderboard = document.getElementById('leaderboard');
+
+        let currentGameData = null;
+
+        // INITIALIZE / SYNC GAME
+        if (gameId) {
+            onValue(gameRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    currentGameData = data;
+                    renderGame(data);
+                    checkTurn(data);
+                    updateLeaderboard(data);
+                }
+            });
+        }
+
+        function renderGame(data) {
+            // Simplified: Update UI showing player positions
+            document.getElementById('player-info').innerHTML = `
+                Playing as: <b style="color:${getPlayerColor(data)}">${userId}</b>
+            `;
+        }
+
+        function getPlayerColor(data) {
+            for(let i=1; i<=4; i++) {
+                if(data[`player${i}`]?.id === userId) return data[`player${i}`].color;
+            }
+            return "grey";
+        }
+
+        function checkTurn(data) {
+            // Assume data.currentTurn stores the ID of the player who should move
+            const isMyTurn = data.currentTurn === userId;
+            rollBtn.disabled = !isMyTurn;
+            turnDisplay.innerText = isMyTurn ? "Your Turn!" : "Waiting for opponent...";
+        }
+
+        rollBtn.onclick = () => {
+            const roll = Math.floor(Math.random() * 6) + 1;
+            diceRes.innerText = roll;
+            processMove(roll);
+        };
+
+        async function processMove(roll) {
+            // 1. Calculate new board positions
+            // 2. Check for Win/Runner up
+            let updates = {};
+            let playersInGame = [];
+            
+            // Logic to determine which player is moving
+            let pKey = "";
+            for(let i=1; i<=4; i++) if(currentGameData[`player${i}`].id === userId) pKey = `player${i}`;
+
+            // Check Win Condition (Simple Example: Score reaching 56)
+            let currentPos = (currentGameData.board && currentGameData.board[userId]) || 0;
+            let newPos = currentPos + roll;
+
+            updates[`board/${userId}`] = newPos;
+
+            if (newPos >= 56) {
+                if (!currentGameData.winner) {
+                    updates[`winner`] = pKey;
+                } else if (!currentGameData.runnersUp1) {
+                    updates[`runnersUp1`] = pKey;
+                } else if (!currentGameData.runnersUp2) {
+                    updates[`runnersUp2`] = pKey;
+                }
+            }
+
+            // Logic to rotate turn
+            const playerSequence = [1,2,3,4].map(i => currentGameData[`player${i}`].id);
+            let nextIndex = (playerSequence.indexOf(userId) + 1) % 4;
+            updates[`currentTurn`] = playerSequence[nextIndex];
+
+            await update(gameRef, updates);
+        }
+
+        function updateLeaderboard(data) {
+            leaderboard.innerHTML = `
+                <h3>Podium</h3>
+                <p>1st: ${data.winner || "---"}</p>
+                <p>2nd: ${data.runnersUp1 || "---"}</p>
+                <p>3rd: ${data.runnersUp2 || "---"}</p>
+            `;
+        }
+    </script>
+</body>
+</html>
