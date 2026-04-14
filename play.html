@@ -136,7 +136,7 @@
                 let userId = localStorage.getItem("userId");
                 let gamesContainer = document.querySelector("#games-container");
                 
-                let filtered_games = Object.fromEntries(Object.entries(games).filter(([key, value]) => value.data.player1.id === userId || value.data.player2.id === userId))
+                let filtered_games = Object.fromEntries(Object.entries(games).filter(([key, value]) => value.data.player1.id === userId || value.data.player2.id === userId || (value.game === "ludo" && (value.data.player3.id === userId || value.data.player4.id === userId))))
                 
                 let sorted_games = Object.fromEntries(Object.entries(filtered_games).sort(([,a], [,b]) => {
                     if (a.data.winner === undefined && b.data.winner !== undefined) {
@@ -169,15 +169,30 @@
                     gameTime.innerHTML = "Time:" + new Date(data.timeStamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + " at " + new Date(data.timeStamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true }).toUpperCase() + "<br>";
                     gameContainer.appendChild(gameTime);
                     
-                    let gamePlayers = document.createElement("span");
-                    gamePlayers.classList.add("game-players");
-                    gamePlayers.innerHTML = "Players:" + player1.name + ", " + player2.name + "<br>";
-                    gameContainer.appendChild(gamePlayers);
-                    
-                    let gameWinner = document.createElement("span");
-                    gameWinner.classList.add("game-winner");
-                    gameWinner.innerHTML = "Winner: " + (data.data.winner === "player 1" ? player1.name + " won" : data.data.winner === "player 2" ? player2.name + " won": data.data.winner === "draw" ? "Draw" : "Not Found") + "<br>";
-                    gameContainer.appendChild(gameWinner);
+                    if (data.game === "ludo") {
+                        let player3 = await getFirebaseData("data/project/game/users/" + data.data.player3.id);
+                        let player4 = await getFirebaseData("data/project/game/users/" + data.data.player4.id);
+                        
+                        let gamePlayers = document.createElement("span");
+                        gamePlayers.classList.add("game-players");
+                        gamePlayers.innerHTML = "Players:" + player1.name + ", " + player2.name + ", " + player3.name + ", " + player4.name + "<br>";
+                        gameContainer.appendChild(gamePlayers);
+                        
+                        let gameWinner = document.createElement("span");
+                        gameWinner.classList.add("game-winner");
+                        gameWinner.innerHTML = "Winner: " + (data.data.winner === "player 1" ? player1.name + " won" : data.data.winner === "player 2" ? player2.name + " won" : data.data.winner === "player 3" ? player3.name + " won" : data.data.winner === "player 4" ? player4.name + " won" : "Not Found") + "<br>";
+                        gameContainer.appendChild(gameWinner);
+                    } else {
+                        let gamePlayers = document.createElement("span");
+                        gamePlayers.classList.add("game-players");
+                        gamePlayers.innerHTML = "Players:" + player1.name + ", " + player2.name + "<br>";
+                        gameContainer.appendChild(gamePlayers);
+                        
+                        let gameWinner = document.createElement("span");
+                        gameWinner.classList.add("game-winner");
+                        gameWinner.innerHTML = "Winner: " + (data.data.winner === "player 1" ? player1.name + " won" : data.data.winner === "player 2" ? player2.name + " won": data.data.winner === "draw" ? "Draw" : "Not Found") + "<br>";
+                        gameContainer.appendChild(gameWinner);
+                    }
                     
                     let gamePlayButton = document.createElement("button");
                     gamePlayButton.classList.add("game-play-button");
