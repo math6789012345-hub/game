@@ -123,8 +123,9 @@
                     addFirebaseData("data/project/game/users/" + id, {
                         "name": name,
                         "email": email,
-                        "password": password}
-                    ).then((success) => {
+                        "password": password,
+                        "timeStamp": Date.now()
+                    }).then((success) => {
                         alert(success);
                         window.open("login.html", "_self");
                     }).catch((error) => {
