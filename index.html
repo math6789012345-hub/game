@@ -36,6 +36,9 @@
             font-size: 2rem;
             margin-top: 20px;
         }
+        #version {
+            font-size: 2rem;
+        }
     </style>
 </head>
 <body>
@@ -56,7 +59,49 @@
         <button id="games-button">Games</button>
         <button id="play-button">Play</button>
     </div>
-    <script>
+    <br>
+    <div id="version"><i class="fa-solid fa-tags"></i>Version: ?.?.?</div>
+    <script type="module">
+        // Import Firebase from CDNs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
+            authDomain: "data-7c972.firebaseapp.com",
+            databaseURL: "https://data-7c972-default-rtdb.firebaseio.com",
+            projectId: "data-7c972",
+            storageBucket: "data-7c972.firebasestorage.app",
+            messagingSenderId: "628115358338",
+            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
+            measurementId: "G-RQX36JBB1Z"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- CRUD Functions (From previous step) ---
+
+        async function getFirebaseData(path) {
+            const dbRef = ref(db, path);
+            const snapshot = await get(dbRef);
+            if (snapshot.exists()) {
+                return snapshot.val();
+            } else {
+                return "No data available at this path.";
+            }
+        }
+
+        async function removeFirebaseData(path) {
+            const dbRef = ref(db, path);
+            await remove(dbRef);
+            return "Data removed successfully!";
+        }
+        
+        // --- data
+        
         let registerButton = document.querySelector("#register-button");
         let loginButton = document.querySelector("#login-button");
         let profileButton = document.querySelector("#profile-button");
@@ -84,6 +129,11 @@
             registerButton.style.display = "none";
             loginButton.style.display = "none";
         }
+        
+        document.addEventListener("DOMContentLoaded", async () => {
+            let version = await getFirebaseData("data/project/game/version");
+            document.querySelector("#version").innerHTML = '<i class="fa-solid fa-tags"></i>Version: ' + version;
+        });
     </script>
 </body>
 </html>
