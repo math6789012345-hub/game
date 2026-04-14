@@ -78,6 +78,7 @@
         <div id="data-container">
             <h1 id="name">name</h1>
             <span id="email">Email: ?@?.?</span>
+            <span id="registration-time">Registration: ?</span>
         </div>
     </div>
     <br>
@@ -139,6 +140,7 @@
                 let user = await getFirebaseData("data/project/game/users/" + localStorage.getItem("userId"));
                 document.querySelector("#name").innerText = user.name;
                 document.querySelector("#email").innerText = "Email: " + user.email;
+                document.querySelector("#registration-time").innerText = "Registration: " + new Date(user.timeStamp);
                 if (user.profilePhoto) {
                     document.querySelector("#profile-picture").src = user.profilePhoto;
                 }
