@@ -7,28 +7,30 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-color: #f0f0f0;
-            --text-color: #000;
+            --bg-color: #f0f3f5;
+            --text-color: #111;
             --nav-bg: #ffffff;
-            --border-color: #000;
+            --border-color: #000000;
+            --card-bg: #ffffff;
         }
 
         body.dark-theme {
-            --bg-color: #1a1a1a;
-            --text-color: #ffffff;
-            --nav-bg: #333333;
+            --bg-color: #121212;
+            --text-color: #eee;
+            --nav-bg: #1e1e1e;
             --border-color: #444;
+            --card-bg: #2a2a2a;
         }
 
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            transition: all 0.3s ease;
+            transition: all 0.3s;
         }
 
-        /* Provided Nav Bar Style */
+        /* Nav Bar */
         #nav-bar {
             position: sticky;
             top: 0px;
@@ -48,51 +50,103 @@
             padding: 5px;
         }
         .nav-active {
-            color: green;
+            color: #27ae60;
         }
 
-        /* Game UI */
-        #game-container {
+        /* Turn Indicator */
+        #turn-header {
+            text-align: center;
+            padding: 15px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--card-bg);
+            border-bottom: 2px solid var(--border-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Game Layout */
+        .container {
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
         }
 
-        #ludo-board {
-            width: 90vw;
-            max-width: 400px;
-            height: 90vw;
-            max-height: 400px;
-            background: white;
+        /* 15x15 Ludo Board */
+        .ludo-board {
+            width: 95vw;
+            max-width: 450px;
+            height: 95vw;
+            max-height: 450px;
+            background: #fff;
             border: 2px solid #333;
             display: grid;
             grid-template-columns: repeat(15, 1fr);
             grid-template-rows: repeat(15, 1fr);
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
-        .status-panel {
+        .cell {
+            border: 1px solid rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        /* Safe Zones / Home Paths Visuals */
+        .base-red { grid-area: 1 / 1 / 7 / 7; background: #ff4757; border: 2px solid #333; }
+        .base-green { grid-area: 1 / 10 / 7 / 16; background: #2ed573; border: 2px solid #333;}
+        .base-blue { grid-area: 10 / 1 / 16 / 7; background: #1e90ff; border: 2px solid #333;}
+        .base-yellow { grid-area: 10 / 10 / 16 / 16; background: #ffa502; border: 2px solid #333;}
+        .center-home { grid-area: 7 / 7 / 10 / 10; background: #333; }
+
+        /* Tokens */
+        .token {
+            width: 70%;
+            height: 70%;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            place-self: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        .token.red { background: #ff4757; }
+        .token.green { background: #2ed573; }
+        .token.yellow { background: #ffa502; }
+        .token.blue { background: #1e90ff; }
+
+        /* Controls */
+        .controls {
             margin-top: 20px;
             text-align: center;
-            padding: 15px;
+            background: var(--card-bg);
+            padding: 20px;
             border-radius: 10px;
-            background: rgba(128, 128, 128, 0.1);
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
         .dice-btn {
-            padding: 15px 30px;
-            font-size: 1.5rem;
-            cursor: pointer;
             background: #27ae60;
             color: white;
             border: none;
-            border-radius: 5px;
-            margin: 10px;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px 0;
+            width: 100%;
         }
+        .dice-btn:disabled { background: #7f8c8d; cursor: not-allowed; }
+        .dice-btn:active:not(:disabled) { transform: scale(0.98); }
 
-        .dice-btn:disabled {
-            background: #7f8c8d;
-        }
+        #dice-val { font-size: 2.5rem; font-weight: bold; display: block; margin: 10px; }
+        
+        .podium p { margin: 5px 0; font-weight: bold; }
+        .msg { color: #e74c3c; font-size: 0.9rem; min-height: 20px;}
     </style>
 </head>
 <body>
@@ -107,25 +161,32 @@
         </div>
     </div>
 
-    <div id="game-container">
-        <h2 id="turn-display">Waiting for players...</h2>
-        <div id="ludo-board">
+    <div id="turn-header">Connecting...</div>
+
+    <div class="container">
+        <div class="ludo-board" id="board">
+            <div class="base-red"></div>
+            <div class="base-green"></div>
+            <div class="base-yellow"></div>
+            <div class="base-blue"></div>
+            <div class="center-home"></div>
             </div>
 
-        <div class="status-panel">
-            <div id="player-info">Loading Game Data...</div>
-            <button id="roll-dice" class="dice-btn" disabled>Roll Dice</button>
-            <div id="dice-result" style="font-size: 2rem; margin-top: 10px;">-</div>
+        <div class="controls">
+            <div id="my-info">Loading Profile...</div>
+            <span id="dice-val">🎲</span>
+            <div class="msg" id="action-msg"></div>
+            <button id="roll-btn" class="dice-btn" disabled>Roll Dice</button>
+            
+            <div class="podium" id="podium-list"></div>
         </div>
-
-        <div id="leaderboard" style="margin-top: 20px;"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // CONFIGURATION
+        // --- 1. FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
             authDomain: "data-7c972.firebaseapp.com",
@@ -136,110 +197,220 @@
             appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
             measurementId: "G-RQX36JBB1Z"
         };
-
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // STATE & LOCAL STORAGE
-        const userId = localStorage.getItem("userId") || "guest_" + Math.floor(Math.random()*1000);
+        // --- 2. LOCAL STATE & THEME ---
+        const userId = localStorage.getItem("userId") || "Guest_" + Math.floor(Math.random() * 9999);
         const gameId = localStorage.getItem("gameId-ludo");
         const theme = localStorage.getItem("theme") || "light";
-        
-        // Apply Theme
         if (theme === "dark") document.body.classList.add("dark-theme");
 
         const gameRef = ref(db, `data/project/game/games/${gameId}/data`);
+        let localData = null;
+        let myKey = null;
 
-        // ELEMENTS
-        const turnDisplay = document.getElementById('turn-display');
-        const rollBtn = document.getElementById('roll-dice');
-        const diceRes = document.getElementById('dice-result');
-        const leaderboard = document.getElementById('leaderboard');
+        // --- 3. BOARD COORDINATES (15x15 Grid, 1-Indexed for CSS Grid) ---
+        // Main perimeter path (52 steps starting from Red start)
+        const path = [
+            {c:2,r:7},{c:3,r:7},{c:4,r:7},{c:5,r:7},{c:6,r:7}, {c:7,r:6},{c:7,r:5},{c:7,r:4},{c:7,r:3},{c:7,r:2},{c:7,r:1},{c:8,r:1},{c:9,r:1},
+            {c:9,r:2},{c:9,r:3},{c:9,r:4},{c:9,r:5},{c:9,r:6}, {c:10,r:7},{c:11,r:7},{c:12,r:7},{c:13,r:7},{c:14,r:7},{c:15,r:7},{c:15,r:8},{c:15,r:9},
+            {c:14,r:9},{c:13,r:9},{c:12,r:9},{c:11,r:9},{c:10,r:9}, {c:9,r:10},{c:9,r:11},{c:9,r:12},{c:9,r:13},{c:9,r:14},{c:9,r:15},{c:8,r:15},{c:7,r:15},
+            {c:7,r:14},{c:7,r:13},{c:7,r:12},{c:7,r:11},{c:7,r:10}, {c:6,r:9},{c:5,r:9},{c:4,r:9},{c:3,r:9},{c:2,r:9},{c:1,r:9},{c:1,r:8},{c:1,r:7}
+        ];
+        
+        // Home straights (5 steps each) + Center (index 57)
+        const homePaths = {
+            player1: [{c:2,r:8},{c:3,r:8},{c:4,r:8},{c:5,r:8},{c:6,r:8}, {c:7,r:8}], // Red
+            player2: [{c:8,r:2},{c:8,r:3},{c:8,r:4},{c:8,r:5},{c:8,r:6}, {c:8,r:7}], // Green
+            player3: [{c:14,r:8},{c:13,r:8},{c:12,r:8},{c:11,r:8},{c:10,r:8}, {c:9,r:8}], // Yellow
+            player4: [{c:8,r:14},{c:8,r:13},{c:8,r:12},{c:8,r:11},{c:8,r:10}, {c:8,r:9}]  // Blue
+        };
 
-        let currentGameData = null;
+        // Base positions (Position 0)
+        const baseCoords = {
+            player1: {c:3, r:3}, // Red Base
+            player2: {c:12, r:3}, // Green Base
+            player3: {c:12, r:12}, // Yellow Base
+            player4: {c:3, r:12}  // Blue Base
+        };
 
-        // INITIALIZE / SYNC GAME
-        if (gameId) {
-            onValue(gameRef, (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    currentGameData = data;
-                    renderGame(data);
-                    checkTurn(data);
-                    updateLeaderboard(data);
-                }
+        // Path Offsets for each player to calculate position on main array
+        const startOffsets = { player1: 0, player2: 13, player3: 26, player4: 39 };
+
+        // Render Background Grid cells visually (Optional but looks nice)
+        const boardEl = document.getElementById('board');
+        for(let i=0; i<225; i++) {
+            let cell = document.createElement('div');
+            cell.className = 'cell';
+            boardEl.appendChild(cell);
+        }
+
+        // --- 4. INITIALIZATION ---
+        async function initGame() {
+            if (!gameId) { document.getElementById('turn-header').innerText = "Game ID Missing!"; return; }
+            const snapshot = await get(gameRef);
+            let data = snapshot.val();
+
+            if (!data) {
+                // Initialize default game state if missing
+                data = {
+                    player1: { id: userId, color: "red" },
+                    player2: { id: "P2_Wait", color: "green" },
+                    player3: { id: "P3_Wait", color: "yellow" },
+                    player4: { id: "P4_Wait", color: "blue" },
+                    board: [0, 0, 0, 0], // Position: 0=Base, 1-56=Path, 57=Win
+                    turn: "player1"
+                };
+                await update(gameRef, data);
+            }
+
+            // Real-time listener
+            onValue(gameRef, (snap) => {
+                localData = snap.val();
+                if (localData) updateUI(localData);
             });
         }
 
-        function renderGame(data) {
-            // Simplified: Update UI showing player positions
-            document.getElementById('player-info').innerHTML = `
-                Playing as: <b style="color:${getPlayerColor(data)}">${userId}</b>
-            `;
-        }
-
-        function getPlayerColor(data) {
-            for(let i=1; i<=4; i++) {
-                if(data[`player${i}`]?.id === userId) return data[`player${i}`].color;
-            }
-            return "grey";
-        }
-
-        function checkTurn(data) {
-            // Assume data.currentTurn stores the ID of the player who should move
-            const isMyTurn = data.currentTurn === userId;
-            rollBtn.disabled = !isMyTurn;
-            turnDisplay.innerText = isMyTurn ? "Your Turn!" : "Waiting for opponent...";
-        }
-
-        rollBtn.onclick = () => {
-            const roll = Math.floor(Math.random() * 6) + 1;
-            diceRes.innerText = roll;
-            processMove(roll);
-        };
-
-        async function processMove(roll) {
-            // 1. Calculate new board positions
-            // 2. Check for Win/Runner up
-            let updates = {};
-            let playersInGame = [];
+        // --- 5. UI UPDATES & TOKEN RENDERING ---
+        function updateUI(data) {
+            myKey = ["player1", "player2", "player3", "player4"].find(k => data[k]?.id === userId);
+            const turnKey = data.turn || "player1";
             
-            // Logic to determine which player is moving
-            let pKey = "";
-            for(let i=1; i<=4; i++) if(currentGameData[`player${i}`].id === userId) pKey = `player${i}`;
+            // Header
+            const header = document.getElementById('turn-header');
+            header.innerText = `${turnKey}'s Turn`;
+            header.style.color = data[turnKey].color === 'yellow' ? '#d35400' : data[turnKey].color;
 
-            // Check Win Condition (Simple Example: Score reaching 56)
-            let currentPos = (currentGameData.board && currentGameData.board[userId]) || 0;
-            let newPos = currentPos + roll;
+            // My Info
+            document.getElementById('my-info').innerHTML = myKey ? `You are <b>${myKey}</b> (${data[myKey].color})` : `Spectator`;
 
-            updates[`board/${userId}`] = newPos;
+            // Button state
+            const btn = document.getElementById('roll-btn');
+            if (myKey && turnKey === myKey && !isWinner(myKey, data)) {
+                btn.disabled = false;
+                btn.innerText = "Roll Dice";
+            } else {
+                btn.disabled = true;
+                btn.innerText = isWinner(myKey, data) ? "You Finished!" : "Wait for Turn";
+            }
 
-            if (newPos >= 56) {
-                if (!currentGameData.winner) {
-                    updates[`winner`] = pKey;
-                } else if (!currentGameData.runnersUp1) {
-                    updates[`runnersUp1`] = pKey;
-                } else if (!currentGameData.runnersUp2) {
-                    updates[`runnersUp2`] = pKey;
+            // Podium
+            document.getElementById('podium-list').innerHTML = `
+                ${data.winner ? `<p>🏆 1st: ${data.winner}</p>` : ''}
+                ${data.runnersUp1 ? `<p>🥈 2nd: ${data.runnersUp1}</p>` : ''}
+                ${data.runnersUp2 ? `<p>🥉 3rd: ${data.runnersUp2}</p>` : ''}
+            `;
+
+            drawTokens(data.board);
+        }
+
+        function drawTokens(boardState) {
+            // Remove existing tokens
+            document.querySelectorAll('.token').forEach(e => e.remove());
+
+            const players = ["player1", "player2", "player3", "player4"];
+            players.forEach((pKey, idx) => {
+                let pos = boardState[idx];
+                let coords;
+
+                if (pos === 0) {
+                    coords = baseCoords[pKey]; // In Base
+                } else if (pos >= 1 && pos <= 51) {
+                    // On main track
+                    let mappedIndex = (startOffsets[pKey] + (pos - 1)) % 52;
+                    coords = path[mappedIndex];
+                } else if (pos >= 52 && pos <= 57) {
+                    // Home straight
+                    coords = homePaths[pKey][pos - 52];
+                } else {
+                    return; // Error fallback
+                }
+
+                let tokenEl = document.createElement('div');
+                tokenEl.className = `token ${localData[pKey].color}`;
+                tokenEl.style.gridColumn = coords.c;
+                tokenEl.style.gridRow = coords.r;
+                document.getElementById('board').appendChild(tokenEl);
+            });
+        }
+
+        function isWinner(pKey, data) {
+            return data.winner === pKey || data.runnersUp1 === pKey || data.runnersUp2 === pKey;
+        }
+
+        // --- 6. GAME LOGIC (DICE ROLL & MOVE) ---
+        document.getElementById('roll-btn').onclick = async () => {
+            document.getElementById('roll-btn').disabled = true;
+            document.getElementById('action-msg').innerText = "";
+            
+            const roll = Math.floor(Math.random() * 6) + 1;
+            document.getElementById('dice-val').innerText = roll;
+            
+            const pIdx = parseInt(myKey.replace("player", "")) - 1;
+            let board = [...(localData.board || [0,0,0,0])];
+            let currentPos = board[pIdx];
+            let newPos = currentPos;
+
+            // Move Rules
+            if (currentPos === 0) {
+                if (roll === 6) newPos = 1; // Needs 6 to exit base
+                else document.getElementById('action-msg').innerText = "You need a 6 to start!";
+            } else {
+                if (currentPos + roll <= 57) newPos = currentPos + roll;
+                else document.getElementById('action-msg').innerText = "Exact roll needed to win!";
+            }
+
+            board[pIdx] = newPos;
+            let updates = {};
+
+            // Capture Logic (If on main path 1-51)
+            if (newPos >= 1 && newPos <= 51) {
+                let myAbsoluteIdx = (startOffsets[myKey] + (newPos - 1)) % 52;
+                for (let i = 0; i < 4; i++) {
+                    if (i === pIdx) continue;
+                    let oppPos = board[i];
+                    if (oppPos >= 1 && oppPos <= 51) {
+                        let oppKey = `player${i+1}`;
+                        let oppAbsoluteIdx = (startOffsets[oppKey] + (oppPos - 1)) % 52;
+                        if (myAbsoluteIdx === oppAbsoluteIdx) {
+                            board[i] = 0; // Send opponent back to base
+                            document.getElementById('action-msg').innerText = "Token Captured!";
+                        }
+                    }
                 }
             }
 
-            // Logic to rotate turn
-            const playerSequence = [1,2,3,4].map(i => currentGameData[`player${i}`].id);
-            let nextIndex = (playerSequence.indexOf(userId) + 1) % 4;
-            updates[`currentTurn`] = playerSequence[nextIndex];
+            updates['board'] = board;
 
+            // Check Win Condition
+            if (newPos === 57) {
+                if (!localData.winner) updates['winner'] = myKey;
+                else if (!localData.runnersUp1) updates['runnersUp1'] = myKey;
+                else if (!localData.runnersUp2) updates['runnersUp2'] = myKey;
+            }
+
+            // Decide Next Turn (Skip if won)
+            let players = ["player1", "player2", "player3", "player4"];
+            let nextTurn = myKey;
+            if (roll !== 6 || newPos === 57) { // 6 gives another turn unless they just won
+                let currentIdx = players.indexOf(myKey);
+                for(let i=1; i<=4; i++) {
+                    let checkKey = players[(currentIdx + i) % 4];
+                    let checkPIdx = parseInt(checkKey.replace("player", "")) - 1;
+                    if (board[checkPIdx] < 57) { // Only pass turn to active players
+                        nextTurn = checkKey;
+                        break;
+                    }
+                }
+            }
+            updates['turn'] = nextTurn;
+
+            // Save to Firebase
             await update(gameRef, updates);
-        }
+        };
 
-        function updateLeaderboard(data) {
-            leaderboard.innerHTML = `
-                <h3>Podium</h3>
-                <p>1st: ${data.winner || "---"}</p>
-                <p>2nd: ${data.runnersUp1 || "---"}</p>
-                <p>3rd: ${data.runnersUp2 || "---"}</p>
-            `;
-        }
+        initGame();
     </script>
 </body>
 </html>
