@@ -112,25 +112,28 @@
         
         let registerButton = document.querySelector("#register-button");
         registerButton.addEventListener("click", async () => {
-            let username = document.querySelector("#username").value;
+            let username = document.querySelector("#username").value.toLowerCase();
             let email = document.querySelector("#email").value;
             let password = document.querySelector("#password").value;
             let confirmPassword = document.querySelector("#confirm-password").value;
-            let id = crypto.randomUUID();
+            let id = username;
             if (username && email && password && password === confirmPassword) {
                 let users = await getFirebaseData("data/project/game/users");
                 if (!users || !(Object.values(users).some(user => user.email === email))) {
-                    addFirebaseData("data/project/game/users/" + id, {
-                        "username": username,
-                        "email": email,
-                        "password": password,
-                        "timeStamp": Date.now()
-                    }).then((success) => {
-                        alert(success);
-                        window.open("login.html", "_self");
-                    }).catch((error) => {
-                        alert(error);
-                    });
+                    if (!(Object.keys(users).some(user => user === username))) {
+                        addFirebaseData("data/project/game/users/" + id, {
+                            "email": email,
+                            "password": password,
+                            "timeStamp": Date.now()
+                        }).then((success) => {
+                            alert(success);
+                            window.open("login.html", "_self");
+                        }).catch((error) => {
+                            alert(error);
+                        });
+                    } else {
+                        alert("Username Not Available");
+                    }
                 } else {
                     alert("Account existed with this email")
                 }
