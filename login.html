@@ -93,23 +93,18 @@
         
         let loginButton = document.querySelector("#login-button");
         loginButton.addEventListener("click", async () => {
-            let username = document.querySelector("#username").value;
+            let username = document.querySelector("#username").value.toLowerCase();
             let password = document.querySelector("#password").value;
             if (username && password) {
-                let users = await getFirebaseData("data/project/game/users");
-                if (!users) {
+                let user = await getFirebaseData("data/project/game/users/" + username);
+                if (!user) {
                     alert("Register");
                 }
-                let login = false;
-                for (let [id, data] of Object.entries(users)) {
-                    if (data.username === username && data.password === password) {
-                        login = true;
-                        localStorage.setItem("userId", id)
-                        alert("Login Successful");
-                        window.open("profile.html", "_self");
-                    }
-                }
-                if (!login) {
+                if (user && user.password === password) {
+                    localStorage.setItem("userId", username)
+                    alert("Login Successful");
+                    window.open("profile.html", "_self");
+                } else {
                     alert("Invalid username or password");
                 }
             } else {
