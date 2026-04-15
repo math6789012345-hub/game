@@ -40,9 +40,9 @@
     </div>
     <div id="register-container">
         <div class="input-container" id="">
-            <label>Name:</label>
+            <label>Username:</label>
             <br>
-            <input id="name" type="text">
+            <input id="username" type="text">
         </div>
         <div class="input-container" id="">
             <label>Email:</label>
@@ -112,16 +112,16 @@
         
         let registerButton = document.querySelector("#register-button");
         registerButton.addEventListener("click", async () => {
-            let name = document.querySelector("#name").value;
+            let username = document.querySelector("#username").value;
             let email = document.querySelector("#email").value;
             let password = document.querySelector("#password").value;
             let confirmPassword = document.querySelector("#confirm-password").value;
             let id = crypto.randomUUID();
-            if (name && email && password && password === confirmPassword) {
+            if (username && email && password && password === confirmPassword) {
                 let users = await getFirebaseData("data/project/game/users");
                 if (!users || !(Object.values(users).some(user => user.email === email))) {
                     addFirebaseData("data/project/game/users/" + id, {
-                        "name": name,
+                        "username": username,
                         "email": email,
                         "password": password,
                         "timeStamp": Date.now()
