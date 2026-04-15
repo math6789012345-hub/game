@@ -156,25 +156,6 @@
 
         // --- add data
         
-        document.addEventListener("DOMContentLoaded", async () => {
-            let users = await getFirebaseData("data/project/game/users");
-            for (let [id, data] of Object.entries(users)) {
-                if (id !== localStorage.getItem("userId")) {
-                    let option = document.createElement("option");
-                    option.innerText = data.email;
-                    document.querySelector("#p2").appendChild(option);
-                    option = document.createElement("option");
-                    option.innerText = data.email;
-                    document.querySelector("#p3").appendChild(option);
-                    option = document.createElement("option");
-                    option.innerText = data.email;
-                    document.querySelector("#p4").appendChild(option);
-                }
-            }
-        });
-        
-        // --- create game
-        
         let theme = localStorage.getItem("theme") || "light";
         if (theme === "light") {
             document.documentElement.style.setProperty('--theme-color', 'black');
@@ -188,59 +169,56 @@
             document.documentElement.style.setProperty('--theme-nav-active-color', 'lightgreen');
         }
         
+        document.addEventListener("DOMContentLoaded", async () => {
+            let users = await getFirebaseData("data/project/game/users");
+            for (let id of Object.keys(users)) {
+                if (id !== localStorage.getItem("userId")) {
+                    let option = document.createElement("option");
+                    option.innerText = "@" + id;
+                    document.querySelector("#p2").appendChild(option);
+                    option = document.createElement("option");
+                    option.innerText = "@" + id;
+                    document.querySelector("#p3").appendChild(option);
+                    option = document.createElement("option");
+                    option.innerText = "@" + id;
+                    document.querySelector("#p4").appendChild(option);
+                }
+            }
+        });
+        
         document.querySelector("#create-button").addEventListener("click", async () => {
             let p1Color = document.querySelector("#p1-color").value.toLowerCase();
             let p2Color = document.querySelector("#p2-color").value.toLowerCase();
             let p3Color = document.querySelector("#p3-color").value.toLowerCase();
             let p4Color = document.querySelector("#p4-color").value.toLowerCase();
-            let p2Email = document.querySelector("#p2").value
-            let p3Email = document.querySelector("#p3").value
-            let p4Email = document.querySelector("#p4").value
-            if (p2Email && p3Email && p4Email) {
-                let gameId = crypto.randomUUID();
+            let p2Username = document.querySelector("#p2").value;
+            let p3Username = document.querySelector("#p3").value
+            let p4Username = document.querySelector("#p4").value
+            if (p2Username && p3Username && p4Username) {
+                let gameId = "id-" + Date.now() + "-" + crypto.randomUUID();
                 let p1 = localStorage.getItem("userId");
-                let users = await getFirebaseData("data/project/game/users");
-                let p2, p3, p4;
-                for (let [id, data] of Object.entries(users)) {
-                    if (p2Email === data.email) {
-                        p2 = id;
-                        break;                        
-                    }
-                }
-                for (let [id, data] of Object.entries(users)) {
-                    if (p3Email === data.email) {
-                        p3 = id;
-                        break;                        
-                    }
-                }
-                for (let [id, data] of Object.entries(users)) {
-                    if (p4Email === data.email) {
-                        p4 = id;
-                        break;                        
-                    }
-                }
-                addFirebaseData("data/project/game/games/" + gameId, {
-                    "timeStamp": Date.now(),
-                    "game": "ludo",
-                    "data": {
-                        "player1": {
-                            "id": p1,
+                let p2 = p2Username.slice(1);
+                let p3 = p3Username.slice(1);
+                let p4 = p4Username.slice(1);
+                addFirebaseData("data/project/game/games/ludo/" + gameId, {
+                    "players": [
+                        {
+                            "username": p1,
                             "color": p1Color
                         },
-                        "player2": {
-                            "id": p2,
+                        {
+                            "username": p2,
                             "color": p2Color
                         },
-                        "player3": {
-                            "id": p3,
+                        {
+                            "username": p3,
                             "color": p3Color
                         },
-                        "player4": {
-                            "id": p4,
+                        {
+                            "username": p4,
                             "color": p4Color
-                        },
-                        "board": []
-                    }
+                        }
+                    ],
                 }).then((success) => {
                     alert(success);
                     localStorage.setItem("gameId-ludo", gameId);
