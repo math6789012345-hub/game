@@ -6,16 +6,27 @@
     <title>Home</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        :root {
+            --theme-color: black;
+            --theme-background-color: white;
+            --theme-nav-color: #eee;
+            --theme-nav-active-color: lightgreen;
+        }
+        body {
+            color: var(--theme-color);
+            background-color: var(--theme-background-color);
+        }
         #nav-bar {
             position: sticky;
             top: 0px;
-            background-color: white;
-            border-bottom: 5px solid black;
+            border-bottom: 5px solid var(--theme-nav-color);
+            background-color: var(--theme-background-color);
         }
         #nav-links {
             width: 100%;
             display: flex;
             justify-content: space-around;
+            color: var(--theme-nav-color);
         }
         .nav-link {
             text-decoration: none;
@@ -24,7 +35,7 @@
             padding: 5px;
         }
         .nav-active {
-            color: green;
+            color: var(--theme-nav-active-color);
         }
         #buttons-container {
             display: flex;
@@ -101,6 +112,19 @@
         }
         
         // --- data
+        
+        let theme = localStorage.getItem("theme") || "light";
+        if (theme === "light") {
+            document.documentElement.style.setProperty('--theme-color', 'black');
+            document.documentElement.style.setProperty('--theme-background-color', 'white');
+            document.documentElement.style.setProperty('--theme-nav-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'green');
+        } else {
+            document.documentElement.style.setProperty('--theme-color', 'white');
+            document.documentElement.style.setProperty('--theme-background-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-color', '#eee');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'lightgreen');
+        }
         
         let registerButton = document.querySelector("#register-button");
         let loginButton = document.querySelector("#login-button");
