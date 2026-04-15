@@ -115,19 +115,6 @@
 
         // --- add data
         
-        document.addEventListener("DOMContentLoaded", async () => {
-            let users = await getFirebaseData("data/project/game/users");
-            for (let [id, data] of Object.entries(users)) {
-                if (id !== localStorage.getItem("userId")) {
-                    let option = document.createElement("option");
-                    option.innerText = data.email;
-                    document.querySelector("#p2").appendChild(option);
-                }
-            }
-        });
-        
-        // --- create game
-        
         let theme = localStorage.getItem("theme") || "light";
         if (theme === "light") {
             document.documentElement.style.setProperty('--theme-color', 'black');
@@ -141,34 +128,35 @@
             document.documentElement.style.setProperty('--theme-nav-active-color', 'lightgreen');
         }
         
-        document.querySelector("#create-button").addEventListener("click", async () => {
-            let p1Color = document.querySelector("#p1-color").value[0].toLowerCase();
-            let p2Email = document.querySelector("#p2").value
-            if (p2Email) {
-                let gameId = crypto.randomUUID();
-                let p1 = localStorage.getItem("userId");
-                let users = await getFirebaseData("data/project/game/users");
-                let p2;
-                for (let [id, data] of Object.entries(users)) {
-                    if (p2Email === data.email) {
-                        p2 = id;
-                        break;
-                    }
+        document.addEventListener("DOMContentLoaded", async () => {
+            let users = await getFirebaseData("data/project/game/users");
+            for (let id of Object.keys(users)) {
+                if (id !== localStorage.getItem("userId")) {
+                    let option = document.createElement("option");
+                    option.innerText = "@" + id;
+                    document.querySelector("#p2").appendChild(option);
                 }
-                addFirebaseData("data/project/game/games/" + gameId, {
-                    "timeStamp": Date.now(),
-                    "game": "chess",
-                    "data": {
-                        "player1": {
-                            "id": p1,
+            }
+        });
+        
+        document.querySelector("#create-button").addEventListener("click", async () => {
+            let p1Color = document.querySelector("#p1-color").value.toLowerCase();
+            let p2Username = document.querySelector("#p2").value;
+            if (p2Username) {
+                let gameId = "id-" + Date.now() + "-" + crypto.randomUUID();
+                let p1 = localStorage.getItem("userId");
+                let p2 = p2Username.slice(1);
+                addFirebaseData("data/project/game/games/chess/" + gameId, {
+                    "players": [
+                        {
+                            "username": p1,
                             "color": p1Color
                         },
-                        "player2": {
-                            "id": p2,
-                            "color": p1Color === "w" ? "b" : "w",
-                        },
-                        "board": []
-                    }
+                        {
+                            "username": p2,
+                            "color": p1Color === "white" ? "black" : "white"
+                        }
+                    ]
                 }).then((success) => {
                     alert(success);
                     localStorage.setItem("gameId-chess", gameId);
