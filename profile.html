@@ -55,7 +55,7 @@
             justify-content: center;
             flex-direction: column;
         }
-        #name {
+        #username {
             text-shadow: 0 0 5px var(--theme-nav-active-color);
         }
     </style>
@@ -76,7 +76,7 @@
         </div>
         <hr>
         <div id="data-container">
-            <h1 id="name">name</h1>
+            <h1 id="username">Username</h1>
             <span id="email">Email: ?@?.?</span>
             <span id="registration-time">Registration: ?</span>
         </div>
@@ -138,9 +138,25 @@
                 window.open("login.html", "_self");
             } else {
                 let user = await getFirebaseData("data/project/game/users/" + localStorage.getItem("userId"));
-                document.querySelector("#name").innerText = user.name;
+                document.querySelector("#username").innerText = "@" + user.username;
                 document.querySelector("#email").innerText = "Email: " + user.email;
-                document.querySelector("#registration-time").innerText = "Registration: " + new Date(user.timeStamp);
+                let registration_time = (new Date() - new Date(user.timeStamp)) / 1000;
+                if (registration_time < 1) {
+                    registration_time = "just now";
+                } else if (registration_time < 60) {
+                    registration_time = parseInt(registration_time) + " seconds ago";
+                } else if (registration_time < 60*60) {
+                    registration_time = parseInt(registration_time / 60) + " minutes ago";
+                } else if (registration_time < 24*60*60) {
+                    registration_time = parseInt(registration_time / (60*60)) + " hours ago";
+                } else if (registration_time < 30*24*60*60) {
+                    registration_time = parseInt(registration_time / (24*60*60)) + " days ago";
+                } else if (registration_time < 365*24*60*60) {
+                    registration_time = parseInt(registration_time / (30*24*60*60)) + " months ago";
+                } else {
+                    registration_time = parseInt(registration_time / (365*24*60*60)) + " months ago";
+                }
+                document.querySelector("#registration-time").innerText = "Registration: " + registration_time;
                 if (user.profilePhoto) {
                     document.querySelector("#profile-picture").src = user.profilePhoto;
                 }
