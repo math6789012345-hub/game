@@ -40,9 +40,9 @@
     </div>
     <div id="login-container">
         <div class="input-container" id="">
-            <label>Email:</label>
+            <label>Username:</label>
             <br>
-            <input id="email" type="email">
+            <input id="username" type="text">
         </div>
         <div class="input-container" id="">
             <label>Password:</label>
@@ -93,16 +93,16 @@
         
         let loginButton = document.querySelector("#login-button");
         loginButton.addEventListener("click", async () => {
-            let email = document.querySelector("#email").value;
+            let username = document.querySelector("#username").value;
             let password = document.querySelector("#password").value;
-            if (email && password) {
+            if (username && password) {
                 let users = await getFirebaseData("data/project/game/users");
                 if (!users) {
                     alert("Register");
                 }
                 let login = false;
                 for (let [id, data] of Object.entries(users)) {
-                    if (data.email === email && data.password === password) {
+                    if (data.username === username && data.password === password) {
                         login = true;
                         localStorage.setItem("userId", id)
                         alert("Login Successful");
@@ -110,7 +110,7 @@
                     }
                 }
                 if (!login) {
-                    alert("Invalid email or password");
+                    alert("Invalid username or password");
                 }
             } else {
                 alert("Fill all input field");
