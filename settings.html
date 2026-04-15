@@ -64,9 +64,9 @@
             <span>Update Account Info:</span>
             <br>
             <div class="input-container" id="">
-                <label>Name:</label>
+                <label>Email:</label>
                 <br>
-                <input id="name" type="text">
+                <input id="email" type="email">
             </div>
             <div class="input-container" id="">
                 <label>Profile Photo:</label>
@@ -170,12 +170,12 @@
                 window.open("login.html", "_self");
             } else {
                 let user = await getFirebaseData("data/project/game/users/" + localStorage.getItem("userId"));
-                document.querySelector("#name").value = user.name;
+                document.querySelector("#email").value = user.email;
             }
         });
         
         document.querySelector("#update-button").addEventListener("click", () => {
-            updateFirebaseData("data/project/game/users/" + localStorage.getItem("userId"), {name: document.querySelector("#name").value}).then((success) => {
+            updateFirebaseData("data/project/game/users/" + localStorage.getItem("userId"), {email: document.querySelector("#email").value}).then((success) => {
                 alert(success);
             }).catch((error) => {
                 alert(error);
