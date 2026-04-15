@@ -159,6 +159,10 @@
                     }
                 });
                 
+                if (sorted_games.length === 0) {
+                    gameCount.innerText = "No Game Found.";
+                }
+                
                 for (let value of sorted_games) {
                     count++;
                     gameCount.innerText = "Showing " + count + "/" + sorted_games.length + " Games";
