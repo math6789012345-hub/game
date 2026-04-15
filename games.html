@@ -6,16 +6,27 @@
     <title>Games</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        :root {
+            --theme-color: black;
+            --theme-background-color: white;
+            --theme-nav-color: #eee;
+            --theme-nav-active-color: lightgreen;
+        }
+        body {
+            color: var(--theme-color);
+            background-color: var(--theme-background-color);
+        }
         #nav-bar {
             position: sticky;
             top: 0px;
-            background-color: white;
-            border-bottom: 5px solid black;
+            border-bottom: 5px solid var(--theme-nav-color);
+            background-color: var(--theme-background-color);
         }
         #nav-links {
             width: 100%;
             display: flex;
             justify-content: space-around;
+            color: var(--theme-nav-color);
         }
         .nav-link {
             text-decoration: none;
@@ -24,7 +35,7 @@
             padding: 5px;
         }
         .nav-active {
-            color: green;
+            color: var(--theme-nav-active-color);
         }
         #games-container {
             margin: 10px;
@@ -70,25 +81,25 @@
     <div id="games-container">
         <div class="game" id="game-tic-tac-toe">
             <h1 class="game-name">Tic Tac Toe</h1>
-            <p class="game-description">tic tac toe</p>
+            <p class="game-description">2 players</p>
             <button class="game-play-button">Play</button>
             <button class="game-create-button">Create</button>
         </div>
         <div class="game" id="game-dots-and-boxes">
             <h1 class="game-name">Dots and Boxes</h1>
-            <p class="game-description">dots and boxes</p>
+            <p class="game-description">2 players</p>
             <button class="game-play-button">Play</button>
             <button class="game-create-button">Create</button>
         </div>
         <div class="game" id="game-chess">
             <h1 class="game-name">Chess</h1>
-            <p class="game-description">chess</p>
+            <p class="game-description">2 players</p>
             <button class="game-play-button">Play</button>
             <button class="game-create-button">Create</button>
         </div>
         <div class="game" id="game-ludo">
             <h1 class="game-name">Ludo</h1>
-            <p class="game-description">Ludo</p>
+            <p class="game-description">4 players</p>
             <button class="game-play-button">Play</button>
             <button class="game-create-button">Create</button>
         </div>
@@ -130,6 +141,20 @@
         </div>
     </div>
     <script>
+        
+        let theme = localStorage.getItem("theme") || "light";
+        if (theme === "light") {
+            document.documentElement.style.setProperty('--theme-color', 'black');
+            document.documentElement.style.setProperty('--theme-background-color', 'white');
+            document.documentElement.style.setProperty('--theme-nav-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'green');
+        } else {
+            document.documentElement.style.setProperty('--theme-color', 'white');
+            document.documentElement.style.setProperty('--theme-background-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-color', '#eee');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'lightgreen');
+        }
+        
         document.querySelectorAll(".game-create-button").forEach((item) => {
             item.addEventListener("click", () => {
                 window.open("games/" + item.parentElement.id.slice(5) + ".html", "_self");
