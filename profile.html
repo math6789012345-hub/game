@@ -138,7 +138,7 @@
                 window.open("login.html", "_self");
             } else {
                 let user = await getFirebaseData("data/project/game/users/" + localStorage.getItem("userId"));
-                document.querySelector("#username").innerText = "@" + user.username;
+                document.querySelector("#username").innerText = "@" + localStorage.getItem("userId");
                 document.querySelector("#email").innerText = "Email: " + user.email;
                 let registration_time = (new Date() - new Date(user.timeStamp)) / 1000;
                 if (registration_time < 1) {
