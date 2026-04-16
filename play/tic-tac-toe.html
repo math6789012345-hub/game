@@ -3,104 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Tic-Tac-Toe</title>
+    <title>Tic Tac Toe</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        /* Theme Variables */
         :root {
-            --bg-color: #ffffff;
-            --text-color: #000000;
-            --nav-bg: #ffffff;
+            --bg-color: white;
+            --text-color: black;
             --nav-border: black;
-            --board-border: #000000;
-            --cell-bg: #f9f9f9;
-            --cell-hover: #ececec;
-            --msg-color: #333333;
+            --cell-border: #333;
+            --hover-bg: #f0f0f0;
         }
 
         body.dark {
             --bg-color: #121212;
             --text-color: #ffffff;
-            --nav-bg: #1e1e1e;
-            --nav-border: #333333;
-            --board-border: #444444;
-            --cell-bg: #2a2a2a;
-            --cell-hover: #3a3a3a;
-            --msg-color: #dddddd;
+            --nav-border: #ffffff;
+            --cell-border: #888;
+            --hover-bg: #2a2a2a;
         }
 
-        /* Global Reset & Body */
-        * {
-            box-sizing: border-box;
+        body {
             margin: 0;
             padding: 0;
-        }
-        body {
-            font-family: Arial, sans-serif;
+            font-family: sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             transition: background-color 0.3s, color 0.3s;
-            min-height: 100vh;
         }
 
-        /* Navigation CSS */
+        /* Nav Bar CSS from prompt */
         #nav-bar {
             position: sticky;
             top: 0px;
-            background-color: var(--nav-bg);
+            background-color: var(--bg-color);
             border-bottom: 5px solid var(--nav-border);
-            z-index: 100;
-            transition: background-color 0.3s, border-bottom 0.3s;
+            z-index: 1000;
         }
         #nav-links {
             width: 100%;
             display: flex;
             justify-content: space-around;
-            padding: 10px 0;
         }
         .nav-link {
             text-decoration: none;
             color: inherit;
             font-size: 2rem;
             padding: 5px;
-            transition: color 0.2s;
         }
         .nav-active {
             color: green;
         }
 
-        /* Game Layout */
-        .game-container {
+        /* Game Board CSS */
+        .container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 2rem;
-            max-width: 600px;
-            margin: 0 auto;
+            margin-top: 30px;
         }
 
-        #status-message {
+        #status {
             font-size: 1.5rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 20px;
             font-weight: bold;
-            color: var(--msg-color);
             text-align: center;
         }
 
-        /* Tic-Tac-Toe Board */
-        #board {
+        .board {
             display: grid;
             grid-template-columns: repeat(3, 100px);
             grid-template-rows: repeat(3, 100px);
             gap: 5px;
-            background-color: var(--board-border);
-            border: 5px solid var(--board-border);
-            border-radius: 10px;
-            overflow: hidden;
+            background-color: var(--cell-border);
+            padding: 5px;
+            border-radius: 5px;
         }
 
         .cell {
-            background-color: var(--cell-bg);
+            background-color: var(--bg-color);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -111,20 +92,11 @@
         }
 
         .cell:hover {
-            background-color: var(--cell-hover);
+            background-color: var(--hover-bg);
         }
 
         .cell.disabled {
             cursor: not-allowed;
-        }
-
-        /* Error Message display */
-        #error-overlay {
-            display: none;
-            color: red;
-            font-weight: bold;
-            margin-top: 1rem;
-            text-align: center;
         }
     </style>
 </head>
@@ -140,47 +112,44 @@
         </div>
     </div>
 
-    <div class="game-container">
-        <div id="status-message">Connecting to game...</div>
-        <div id="board">
-            <div class="cell" data-index="0"></div>
-            <div class="cell" data-index="1"></div>
-            <div class="cell" data-index="2"></div>
-            <div class="cell" data-index="3"></div>
-            <div class="cell" data-index="4"></div>
-            <div class="cell" data-index="5"></div>
-            <div class="cell" data-index="6"></div>
-            <div class="cell" data-index="7"></div>
-            <div class="cell" data-index="8"></div>
+    <div class="container">
+        <div id="status">Connecting to game...</div>
+        <div class="board" id="board">
+            <div class="cell" onclick="makeMove(0)"></div>
+            <div class="cell" onclick="makeMove(1)"></div>
+            <div class="cell" onclick="makeMove(2)"></div>
+            <div class="cell" onclick="makeMove(3)"></div>
+            <div class="cell" onclick="makeMove(4)"></div>
+            <div class="cell" onclick="makeMove(5)"></div>
+            <div class="cell" onclick="makeMove(6)"></div>
+            <div class="cell" onclick="makeMove(7)"></div>
+            <div class="cell" onclick="makeMove(8)"></div>
         </div>
-        <div id="error-overlay"></div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-        // ==========================================
-        // 1. SETUP THEME & CHECK CREDENTIALS FIRST
-        // ==========================================
-        const theme = localStorage.getItem('theme') || 'light';
-        document.body.classList.add(theme);
-
-        const userId = localStorage.getItem('userId');
+    <script>
+        // 1. Initial Checks & Setup
+        const userId = localStorage.getItem("userId");
         if (!userId) {
             window.open("../login.html", "_self");
-            throw new Error("Missing userId, redirecting to login...");
         }
 
-        const gameId = localStorage.getItem('gameId-tic-tac-toe');
+        const gameId = localStorage.getItem("gameId-tic-tac-toe");
         if (!gameId) {
             window.open("../play.html", "_self");
-            throw new Error("Missing gameId, redirecting to play menu...");
         }
 
-        // ==========================================
-        // 2. INITIALIZE FIREBASE 
-        // ==========================================
+        let theme = localStorage.getItem("theme");
+        if (theme !== "dark" && theme !== "light") {
+            theme = "light";
+            localStorage.setItem("theme", "light");
+        }
+        document.body.classList.add(theme);
+
+        // 2. Firebase Configuration (REPLACE WITH YOUR CONFIG)
         const firebaseConfig = {
             apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
             authDomain: "data-7c972.firebaseapp.com",
@@ -191,147 +160,210 @@
             appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
             measurementId: "G-RQX36JBB1Z"
         };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+        const gameRef = db.ref(`data/project/game/games/tic-tac-toe/${gameId}`);
 
-        // ==========================================
-        // 3. GAME STATE VARIABLES & DATABASE REF
-        // ==========================================
-        const statusEl = document.getElementById('status-message');
-        const errorEl = document.getElementById('error-overlay');
-        const cells = document.querySelectorAll('.cell');
+        // 3. Game Variables
+        let gameData = null;
+        let me = null;
+        let p1 = null;
+        let p2 = null;
 
-        const gamePath = `data/project/game/games/tic-tac-toe/${gameId}`;
-        const gameRef = ref(db, gamePath);
-
-        let players = [];
-        let boardState = Array(9).fill(null); 
-        let gameWinner = null;
-        let myPlayerIndex = -1;
-        let currentTurnIndex = 0; 
-
-        // Winning combinations
-        const winPatterns = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Cols
-            [0, 4, 8], [2, 4, 6]             // Diagonals
-        ];
-
-        // ==========================================
-        // 4. DATABASE LISTENER
-        // ==========================================
-        onValue(gameRef, (snapshot) => {
-            const data = snapshot.val();
+        // 4. Firebase Listener
+        gameRef.on('value', (snapshot) => {
+            gameData = snapshot.val();
             
-            if (!data) {
-                statusEl.innerText = "Waiting for game data...";
+            if (!gameData || !gameData.players) {
+                document.getElementById('status').innerText = "Game data not found.";
                 return;
             }
 
-            players = data.players || [];
-            boardState = data.board || Array(9).fill(null);
-            gameWinner = data.winner || null;
+            p1 = gameData.players[0];
+            p2 = gameData.players[1];
 
-            // Identify current user's index
-            myPlayerIndex = players.findIndex(p => p.username === userId);
-            
-            // Determine whose turn it is based on filled spots
-            const filledSpots = boardState.filter(cell => cell !== null).length;
-            currentTurnIndex = filledSpots % 2;
+            if (p1.username === userId) me = p1;
+            else if (p2.username === userId) me = p2;
+            else {
+                document.getElementById('status').innerText = "You are spectating.";
+            }
 
-            updateUI();
+            // Initialize board if missing
+            if (!gameData.board) {
+                if (me && me.username === p1.username) {
+                    gameRef.update({ board: ["", "", "", "", "", "", "", "", ""] });
+                }
+                return; // Wait for the update to trigger the listener again
+            }
+
+            renderBoard();
+            updateStatus();
+
+            // Computer Move Logic
+            if (p2.username === "computer" && me && me.username === p1.username && !gameData.winner) {
+                if (isTurn(p2.symbol)) {
+                    setTimeout(makeComputerMove, 500); // Small delay for realism
+                }
+            }
         });
 
-        // ==========================================
-        // 5. UPDATE UI
-        // ==========================================
-        function updateUI() {
-            // Update Board Cells
+        // 5. Board Rendering
+        function renderBoard() {
+            const cells = document.querySelectorAll('.cell');
             cells.forEach((cell, index) => {
-                const cellOwner = boardState[index];
+                const cellSymbol = gameData.board[index];
+                cell.innerText = cellSymbol;
                 
-                if (cellOwner) {
-                    const ownerData = players.find(p => p.username === cellOwner);
-                    if (ownerData) {
-                        cell.innerText = ownerData.symbol;
-                        cell.style.color = ownerData.color;
-                    }
+                // Color formatting
+                if (cellSymbol === p1.symbol) cell.style.color = p1.color;
+                else if (cellSymbol === p2.symbol) cell.style.color = p2.color;
+                else cell.style.color = 'inherit';
+
+                // Disable if filled or game over
+                if (cellSymbol !== "" || gameData.winner) {
                     cell.classList.add('disabled');
                 } else {
-                    cell.innerText = "";
                     cell.classList.remove('disabled');
                 }
             });
+        }
 
-            // Update Status Message
-            if (gameWinner) {
-                if (gameWinner === `@${userId}`) {
-                    statusEl.innerText = "🏆 You Won! 🏆";
-                } else if (gameWinner === "draw") {
-                    statusEl.innerText = "🤝 It's a Draw!";
+        // 6. Turn & Status Logic
+        function isTurn(symbol) {
+            let p1Count = 0, p2Count = 0;
+            gameData.board.forEach(c => {
+                if (c === p1.symbol) p1Count++;
+                if (c === p2.symbol) p2Count++;
+            });
+            // p1 always goes first
+            if (symbol === p1.symbol) return p1Count === p2Count;
+            return p1Count > p2Count;
+        }
+
+        function updateStatus() {
+            const statusDiv = document.getElementById('status');
+            if (gameData.winner) {
+                if (gameData.winner === "draw") {
+                    statusDiv.innerText = "Game ended in a draw!";
                 } else {
-                    statusEl.innerText = "💀 You Lost!";
+                    statusDiv.innerText = `Winner: ${gameData.winner}`;
                 }
-                disableAllCells();
             } else {
-                if (myPlayerIndex === -1) {
-                    statusEl.innerText = "Spectating...";
-                    disableAllCells();
-                } else if (currentTurnIndex === myPlayerIndex) {
-                    statusEl.innerText = "Your Turn";
+                if (!me) {
+                    statusDiv.innerText = isTurn(p1.symbol) ? `${p1.username}'s Turn` : `${p2.username}'s Turn`;
                 } else {
-                    const activePlayer = players[currentTurnIndex];
-                    statusEl.innerText = `Waiting for ${activePlayer ? activePlayer.username : "opponent"}...`;
+                    statusDiv.innerText = isTurn(me.symbol) ? "Your Turn" : "Opponent's Turn";
                 }
             }
         }
 
-        function disableAllCells() {
-            cells.forEach(cell => cell.classList.add('disabled'));
+        // 7. Human Player Move
+        function makeMove(index) {
+            if (!me || gameData.winner || gameData.board[index] !== "" || !isTurn(me.symbol)) return;
+
+            gameData.board[index] = me.symbol;
+            
+            // Optimistic rendering
+            renderBoard(); 
+
+            gameRef.update({ board: gameData.board }).then(() => {
+                checkAndSetWinner(gameData.board, me);
+            });
         }
 
-        // ==========================================
-        // 6. HANDLE CELL CLICKS & WIN LOGIC
-        // ==========================================
-        cells.forEach(cell => {
-            cell.addEventListener('click', (e) => {
-                const index = parseInt(e.target.getAttribute('data-index'));
+        // 8. Winning Logic
+        const winCombos = [[0,1,2], [3,4,5], [6,7,8], [0,3,6], [1,4,7], [2,5,8], [0,4,8], [2,4,6]];
 
-                // Prevent move if: game over, not your turn, spectator, or cell filled
-                if (gameWinner || myPlayerIndex === -1 || currentTurnIndex !== myPlayerIndex || boardState[index] !== null) {
-                    return;
+        function checkAndSetWinner(boardState, lastPlayer) {
+            let isWin = false;
+            for (let combo of winCombos) {
+                if (boardState[combo[0]] !== "" &&
+                    boardState[combo[0]] === boardState[combo[1]] &&
+                    boardState[combo[1]] === boardState[combo[2]]) {
+                    isWin = true; 
+                    break;
                 }
+            }
+            
+            if (isWin) {
+                gameRef.update({ winner: "@" + lastPlayer.username });
+            } else if (!boardState.includes("")) {
+                gameRef.update({ winner: "draw" });
+            }
+        }
 
-                // Make move locally
-                boardState[index] = userId;
-                
-                // Check win condition
-                const isWin = checkWinner(userId);
-                const isDraw = !isWin && boardState.every(c => c !== null);
+        // 9. Computer AI (Minimax Algorithm)
+        function makeComputerMove() {
+            if (gameData.winner) return;
 
-                // Prepare Firebase payload
-                const updates = {};
-                updates['board'] = boardState;
-                
-                if (isWin) {
-                    updates['winner'] = `@${userId}`;
-                } else if (isDraw) {
-                    updates['winner'] = "draw";
+            let board = [...gameData.board];
+            let bestScore = -Infinity;
+            let move;
+
+            for (let i = 0; i < 9; i++) {
+                if (board[i] === "") {
+                    board[i] = p2.symbol;
+                    let score = minimax(board, 0, false);
+                    board[i] = "";
+                    if (score > bestScore) {
+                        bestScore = score;
+                        move = i;
+                    }
                 }
+            }
 
-                // Update Realtime Database
-                update(gameRef, updates).catch(err => {
-                    console.error("Firebase update failed:", err);
-                    errorEl.style.display = 'block';
-                    errorEl.innerText = "Failed to synchronize move.";
+            if (move !== undefined) {
+                gameData.board[move] = p2.symbol;
+                gameRef.update({ board: gameData.board }).then(() => {
+                    checkAndSetWinner(gameData.board, p2);
                 });
-            });
-        });
+            }
+        }
 
-        function checkWinner(playerUsername) {
-            return winPatterns.some(pattern => {
-                return pattern.every(index => boardState[index] === playerUsername);
-            });
+        function minimax(board, depth, isMaximizing) {
+            let result = checkWinAI(board);
+            if (result === p2.symbol) return 10 - depth; // Computer wins
+            if (result === p1.symbol) return -10 + depth; // Human wins
+            if (result === "tie") return 0; // Draw
+
+            if (isMaximizing) {
+                let bestScore = -Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === "") {
+                        board[i] = p2.symbol;
+                        let score = minimax(board, depth + 1, false);
+                        board[i] = "";
+                        bestScore = Math.max(score, bestScore);
+                    }
+                }
+                return bestScore;
+            } else {
+                let bestScore = Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === "") {
+                        board[i] = p1.symbol;
+                        let score = minimax(board, depth + 1, true);
+                        board[i] = "";
+                        bestScore = Math.min(score, bestScore);
+                    }
+                }
+                return bestScore;
+            }
+        }
+
+        function checkWinAI(board) {
+            for (let combo of winCombos) {
+                if (board[combo[0]] !== "" && 
+                    board[combo[0]] === board[combo[1]] && 
+                    board[combo[1]] === board[combo[2]]) {
+                    return board[combo[0]];
+                }
+            }
+            if (!board.includes("")) return "tie";
+            return null;
         }
     </script>
 </body>
