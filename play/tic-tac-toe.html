@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic Tac Toe</title>
+    <title>Tic Tac Toe - Live Play</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -19,20 +19,19 @@
             --bg-color: #121212;
             --text-color: #ffffff;
             --nav-border: #ffffff;
-            --cell-border: #888;
+            --cell-border: #444;
             --hover-bg: #2a2a2a;
         }
 
         body {
             margin: 0;
             padding: 0;
-            font-family: sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
+            transition: background-color 0.3s;
         }
 
-        /* Nav Bar CSS from prompt */
         #nav-bar {
             position: sticky;
             top: 0px;
@@ -55,18 +54,18 @@
             color: green;
         }
 
-        /* Game Board CSS */
-        .container {
+        .game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 30px;
+            padding: 20px;
         }
 
-        #status {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
+        #status-display {
+            font-size: 1.4rem;
+            margin: 20px 0;
             font-weight: bold;
+            height: 2rem;
             text-align: center;
         }
 
@@ -74,10 +73,11 @@
             display: grid;
             grid-template-columns: repeat(3, 100px);
             grid-template-rows: repeat(3, 100px);
-            gap: 5px;
+            gap: 8px;
             background-color: var(--cell-border);
-            padding: 5px;
-            border-radius: 5px;
+            padding: 8px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
         .cell {
@@ -85,13 +85,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 4rem;
+            font-size: 3.5rem;
+            font-weight: bold;
             cursor: pointer;
             user-select: none;
-            transition: background-color 0.2s;
+            border-radius: 4px;
         }
 
-        .cell:hover {
+        .cell:hover:not(.disabled) {
             background-color: var(--hover-bg);
         }
 
@@ -112,18 +113,18 @@
         </div>
     </div>
 
-    <div class="container">
-        <div id="status">Connecting to game...</div>
-        <div class="board" id="board">
-            <div class="cell" onclick="makeMove(0)"></div>
-            <div class="cell" onclick="makeMove(1)"></div>
-            <div class="cell" onclick="makeMove(2)"></div>
-            <div class="cell" onclick="makeMove(3)"></div>
-            <div class="cell" onclick="makeMove(4)"></div>
-            <div class="cell" onclick="makeMove(5)"></div>
-            <div class="cell" onclick="makeMove(6)"></div>
-            <div class="cell" onclick="makeMove(7)"></div>
-            <div class="cell" onclick="makeMove(8)"></div>
+    <div class="game-container">
+        <div id="status-display">Syncing Game...</div>
+        <div class="board" id="game-board">
+            <div class="cell" onclick="handleMove(0)"></div>
+            <div class="cell" onclick="handleMove(1)"></div>
+            <div class="cell" onclick="handleMove(2)"></div>
+            <div class="cell" onclick="handleMove(3)"></div>
+            <div class="cell" onclick="handleMove(4)"></div>
+            <div class="cell" onclick="handleMove(5)"></div>
+            <div class="cell" onclick="handleMove(6)"></div>
+            <div class="cell" onclick="handleMove(7)"></div>
+            <div class="cell" onclick="handleMove(8)"></div>
         </div>
     </div>
 
@@ -131,25 +132,16 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // 1. Initial Checks & Setup
+        // 1. Validation & Theme
         const userId = localStorage.getItem("userId");
-        if (!userId) {
-            window.open("../login.html", "_self");
-        }
-
         const gameId = localStorage.getItem("gameId-tic-tac-toe");
-        if (!gameId) {
-            window.open("../play.html", "_self");
-        }
+        const theme = localStorage.getItem("theme") || "light";
 
-        let theme = localStorage.getItem("theme");
-        if (theme !== "dark" && theme !== "light") {
-            theme = "light";
-            localStorage.setItem("theme", "light");
-        }
+        if (!userId) window.open("../login.html", "_self");
+        if (!gameId) window.open("../play.html", "_self");
         document.body.classList.add(theme);
 
-        // 2. Firebase Configuration (REPLACE WITH YOUR CONFIG)
+        // 2. Firebase Init
         const firebaseConfig = {
             apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
             authDomain: "data-7c972.firebaseapp.com",
@@ -160,152 +152,108 @@
             appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
             measurementId: "G-RQX36JBB1Z"
         };
-        
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const gameRef = db.ref(`data/project/game/games/tic-tac-toe/${gameId}`);
 
-        // 3. Game Variables
-        let gameData = null;
-        let me = null;
-        let p1 = null;
-        let p2 = null;
+        let gameState = null;
+        let myInfo = null;
+        let opponentInfo = null;
 
-        // 4. Firebase Listener
+        // 3. Real-time Listener
         gameRef.on('value', (snapshot) => {
-            gameData = snapshot.val();
-            
-            if (!gameData || !gameData.players) {
-                document.getElementById('status').innerText = "Game data not found.";
+            gameState = snapshot.val();
+            if (!gameState || !gameState.players) return;
+
+            const p1 = gameState.players[0];
+            const p2 = gameState.players[1];
+
+            myInfo = (p1.username === userId) ? p1 : p2;
+            opponentInfo = (p1.username === userId) ? p2 : p1;
+
+            // Init Board if needed
+            if (!gameState.board) {
+                if (userId === p1.username) gameRef.update({ board: Array(9).fill("") });
                 return;
             }
 
-            p1 = gameData.players[0];
-            p2 = gameData.players[1];
-
-            if (p1.username === userId) me = p1;
-            else if (p2.username === userId) me = p2;
-            else {
-                document.getElementById('status').innerText = "You are spectating.";
-            }
-
-            // Initialize board if missing
-            if (!gameData.board) {
-                if (me && me.username === p1.username) {
-                    gameRef.update({ board: ["", "", "", "", "", "", "", "", ""] });
-                }
-                return; // Wait for the update to trigger the listener again
-            }
-
-            renderBoard();
-            updateStatus();
-
-            // Computer Move Logic
-            if (p2.username === "computer" && me && me.username === p1.username && !gameData.winner) {
-                if (isTurn(p2.symbol)) {
-                    setTimeout(makeComputerMove, 500); // Small delay for realism
-                }
+            render();
+            
+            // Logic for Computer Turn
+            if (opponentInfo.username === "computer" && !gameState.winner && isSymbolTurn(opponentInfo.symbol)) {
+                setTimeout(runComputerAI, 600);
             }
         });
 
-        // 5. Board Rendering
-        function renderBoard() {
+        function render() {
             const cells = document.querySelectorAll('.cell');
-            cells.forEach((cell, index) => {
-                const cellSymbol = gameData.board[index];
-                cell.innerText = cellSymbol;
-                
-                // Color formatting
-                if (cellSymbol === p1.symbol) cell.style.color = p1.color;
-                else if (cellSymbol === p2.symbol) cell.style.color = p2.color;
-                else cell.style.color = 'inherit';
+            const status = document.getElementById('status-display');
+            const board = gameState.board;
 
-                // Disable if filled or game over
-                if (cellSymbol !== "" || gameData.winner) {
-                    cell.classList.add('disabled');
-                } else {
-                    cell.classList.remove('disabled');
-                }
+            cells.forEach((cell, i) => {
+                cell.innerText = board[i];
+                cell.style.color = (board[i] === gameState.players[0].symbol) ? gameState.players[0].color : gameState.players[1].color;
+                cell.classList.toggle('disabled', board[i] !== "" || !!gameState.winner);
             });
-        }
 
-        // 6. Turn & Status Logic
-        function isTurn(symbol) {
-            let p1Count = 0, p2Count = 0;
-            gameData.board.forEach(c => {
-                if (c === p1.symbol) p1Count++;
-                if (c === p2.symbol) p2Count++;
-            });
-            // p1 always goes first
-            if (symbol === p1.symbol) return p1Count === p2Count;
-            return p1Count > p2Count;
-        }
-
-        function updateStatus() {
-            const statusDiv = document.getElementById('status');
-            if (gameData.winner) {
-                if (gameData.winner === "draw") {
-                    statusDiv.innerText = "Game ended in a draw!";
-                } else {
-                    statusDiv.innerText = `Winner: ${gameData.winner}`;
-                }
+            if (gameState.winner) {
+                status.innerText = gameState.winner === "draw" ? "It's a Draw!" : `Winner: ${gameState.winner}`;
             } else {
-                if (!me) {
-                    statusDiv.innerText = isTurn(p1.symbol) ? `${p1.username}'s Turn` : `${p2.username}'s Turn`;
-                } else {
-                    statusDiv.innerText = isTurn(me.symbol) ? "Your Turn" : "Opponent's Turn";
-                }
+                const currentSymbol = getCurrentTurnSymbol();
+                const currentUsername = (myInfo.symbol === currentSymbol) ? "Your Turn" : `${opponentInfo.username}'s Turn`;
+                status.innerText = currentUsername;
             }
         }
 
-        // 7. Human Player Move
-        function makeMove(index) {
-            if (!me || gameData.winner || gameData.board[index] !== "" || !isTurn(me.symbol)) return;
-
-            gameData.board[index] = me.symbol;
-            
-            // Optimistic rendering
-            renderBoard(); 
-
-            gameRef.update({ board: gameData.board }).then(() => {
-                checkAndSetWinner(gameData.board, me);
-            });
+        function getCurrentTurnSymbol() {
+            const counts = gameState.board.reduce((acc, cur) => {
+                if (cur === gameState.players[0].symbol) acc.p1++;
+                if (cur === gameState.players[1].symbol) acc.p2++;
+                return acc;
+            }, {p1:0, p2:0});
+            return counts.p1 <= counts.p2 ? gameState.players[0].symbol : gameState.players[1].symbol;
         }
 
-        // 8. Winning Logic
-        const winCombos = [[0,1,2], [3,4,5], [6,7,8], [0,3,6], [1,4,7], [2,5,8], [0,4,8], [2,4,6]];
+        function isSymbolTurn(symbol) {
+            return getCurrentTurnSymbol() === symbol;
+        }
 
-        function checkAndSetWinner(boardState, lastPlayer) {
-            let isWin = false;
-            for (let combo of winCombos) {
-                if (boardState[combo[0]] !== "" &&
-                    boardState[combo[0]] === boardState[combo[1]] &&
-                    boardState[combo[1]] === boardState[combo[2]]) {
-                    isWin = true; 
+        function handleMove(index) {
+            if (gameState.winner || gameState.board[index] !== "" || !isSymbolTurn(myInfo.symbol)) return;
+            
+            const newBoard = [...gameState.board];
+            newBoard[index] = myInfo.symbol;
+            processWinCheck(newBoard, myInfo.username);
+        }
+
+        function processWinCheck(board, username) {
+            const winPaths = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            let winner = null;
+
+            for (let path of winPaths) {
+                if (board[path[0]] && board[path[0]] === board[path[1]] && board[path[0]] === board[path[2]]) {
+                    winner = "@" + username;
                     break;
                 }
             }
-            
-            if (isWin) {
-                gameRef.update({ winner: "@" + lastPlayer.username });
-            } else if (!boardState.includes("")) {
-                gameRef.update({ winner: "draw" });
-            }
+
+            if (!winner && !board.includes("")) winner = "draw";
+
+            const updates = { board: board };
+            if (winner) updates.winner = winner;
+            gameRef.update(updates);
         }
 
-        // 9. Computer AI (Minimax Algorithm)
-        function makeComputerMove() {
-            if (gameData.winner) return;
-
-            let board = [...gameData.board];
+        // 4. Computer AI (Minimax)
+        function runComputerAI() {
+            const board = [...gameState.board];
             let bestScore = -Infinity;
             let move;
 
             for (let i = 0; i < 9; i++) {
                 if (board[i] === "") {
-                    board[i] = p2.symbol;
+                    board[i] = opponentInfo.symbol;
                     let score = minimax(board, 0, false);
                     board[i] = "";
                     if (score > bestScore) {
@@ -314,56 +262,47 @@
                     }
                 }
             }
-
             if (move !== undefined) {
-                gameData.board[move] = p2.symbol;
-                gameRef.update({ board: gameData.board }).then(() => {
-                    checkAndSetWinner(gameData.board, p2);
-                });
+                board[move] = opponentInfo.symbol;
+                processWinCheck(board, "computer");
             }
         }
 
         function minimax(board, depth, isMaximizing) {
-            let result = checkWinAI(board);
-            if (result === p2.symbol) return 10 - depth; // Computer wins
-            if (result === p1.symbol) return -10 + depth; // Human wins
-            if (result === "tie") return 0; // Draw
+            const result = checkInternalWin(board);
+            if (result === opponentInfo.symbol) return 10 - depth;
+            if (result === myInfo.symbol) return depth - 10;
+            if (result === "draw") return 0;
 
             if (isMaximizing) {
-                let bestScore = -Infinity;
-                for (let i = 0; i < 9; i++) {
-                    if (board[i] === "") {
-                        board[i] = p2.symbol;
-                        let score = minimax(board, depth + 1, false);
+                let best = -Infinity;
+                for(let i=0; i<9; i++) {
+                    if(board[i] === "") {
+                        board[i] = opponentInfo.symbol;
+                        best = Math.max(best, minimax(board, depth + 1, false));
                         board[i] = "";
-                        bestScore = Math.max(score, bestScore);
                     }
                 }
-                return bestScore;
+                return best;
             } else {
-                let bestScore = Infinity;
-                for (let i = 0; i < 9; i++) {
-                    if (board[i] === "") {
-                        board[i] = p1.symbol;
-                        let score = minimax(board, depth + 1, true);
+                let best = Infinity;
+                for(let i=0; i<9; i++) {
+                    if(board[i] === "") {
+                        board[i] = myInfo.symbol;
+                        best = Math.min(best, minimax(board, depth + 1, true));
                         board[i] = "";
-                        bestScore = Math.min(score, bestScore);
                     }
                 }
-                return bestScore;
+                return best;
             }
         }
 
-        function checkWinAI(board) {
-            for (let combo of winCombos) {
-                if (board[combo[0]] !== "" && 
-                    board[combo[0]] === board[combo[1]] && 
-                    board[combo[1]] === board[combo[2]]) {
-                    return board[combo[0]];
-                }
+        function checkInternalWin(b) {
+            const winPaths = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for (let p of winPaths) {
+                if (b[p[0]] && b[p[0]] === b[p[1]] && b[p[0]] === b[p[2]]) return b[p[0]];
             }
-            if (!board.includes("")) return "tie";
-            return null;
+            return b.includes("") ? null : "draw";
         }
     </script>
 </body>
