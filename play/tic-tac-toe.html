@@ -1,309 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic Tac Toe - Live Play</title>
+    <title>Tic Tac Toe</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <script>
+        const userId = localStorage.getItem("userId"), gameId = localStorage.getItem("gameId-tic-tac-toe");
+        if (!userId) window.open("../login.html", "_self");
+        if (!gameId) window.open("../play.html", "_self");
+        document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "light");
+    </script>
     <style>
-        :root {
-            --bg-color: white;
-            --text-color: black;
-            --nav-border: black;
-            --cell-border: #333;
-            --hover-bg: #f0f0f0;
-        }
-
-        body.dark {
-            --bg-color: #121212;
-            --text-color: #ffffff;
-            --nav-border: #ffffff;
-            --cell-border: #444;
-            --hover-bg: #2a2a2a;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            transition: background-color 0.3s;
-        }
-
-        #nav-bar {
-            position: sticky;
-            top: 0px;
-            background-color: var(--bg-color);
-            border-bottom: 5px solid var(--nav-border);
-            z-index: 1000;
-        }
-        #nav-links {
-            width: 100%;
-            display: flex;
-            justify-content: space-around;
-        }
-        .nav-link {
-            text-decoration: none;
-            color: inherit;
-            font-size: 2rem;
-            padding: 5px;
-        }
-        .nav-active {
-            color: green;
-        }
-
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-        }
-
-        #status-display {
-            font-size: 1.4rem;
-            margin: 20px 0;
-            font-weight: bold;
-            height: 2rem;
-            text-align: center;
-        }
-
-        .board {
-            display: grid;
-            grid-template-columns: repeat(3, 100px);
-            grid-template-rows: repeat(3, 100px);
-            gap: 8px;
-            background-color: var(--cell-border);
-            padding: 8px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .cell {
-            background-color: var(--bg-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 3.5rem;
-            font-weight: bold;
-            cursor: pointer;
-            user-select: none;
-            border-radius: 4px;
-        }
-
-        .cell:hover:not(.disabled) {
-            background-color: var(--hover-bg);
-        }
-
-        .cell.disabled {
-            cursor: not-allowed;
-        }
+        :root { --bg: #fff; --text: #000; --nav-bg: #fff; --nav-border: #000; --board-bg: #222; --cell-bg: #f5f5f5; }
+        [data-theme="dark"] { --bg: #121212; --text: #fff; --nav-bg: #1e1e1e; --nav-border: #444; --board-bg: #555; --cell-bg: #2a2a2a; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; }
+        #nav-bar { position: sticky; top: 0; background: var(--nav-bg); border-bottom: 5px solid var(--nav-border); display: flex; justify-content: space-around; }
+        .nav-link { text-decoration: none; color: inherit; font-size: 2rem; padding: 5px; }
+        .nav-active { color: green; }
+        #game { display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        #status { padding: 15px; margin-bottom: 20px; font-size: 1.5rem; font-weight: bold; }
+        #board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 300px; background: var(--board-bg); padding: 5px; border-radius: 10px; }
+        .cell { aspect-ratio: 1; background: var(--cell-bg); display: flex; justify-content: center; align-items: center; font-size: 3rem; font-weight: bold; cursor: pointer; border-radius: 5px; }
     </style>
 </head>
 <body>
-
     <div id="nav-bar">
-        <div id="nav-links">
-            <a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
-            <a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
-            <a class="nav-link" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
-            <a class="nav-link nav-active" href="../play.html"><i class="fa-solid fa-play"></i></a>
-            <a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
-        </div>
+        <a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
+        <a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
+        <a class="nav-link" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
+        <a class="nav-link nav-active" href="../play.html"><i class="fa-solid fa-play"></i></a>
+        <a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
     </div>
-
-    <div class="game-container">
-        <div id="status-display">Syncing Game...</div>
-        <div class="board" id="game-board">
-            <div class="cell" onclick="handleMove(0)"></div>
-            <div class="cell" onclick="handleMove(1)"></div>
-            <div class="cell" onclick="handleMove(2)"></div>
-            <div class="cell" onclick="handleMove(3)"></div>
-            <div class="cell" onclick="handleMove(4)"></div>
-            <div class="cell" onclick="handleMove(5)"></div>
-            <div class="cell" onclick="handleMove(6)"></div>
-            <div class="cell" onclick="handleMove(7)"></div>
-            <div class="cell" onclick="handleMove(8)"></div>
-        </div>
+    <div id="game">
+        <div id="status">Connecting...</div>
+        <div id="board"></div>
     </div>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-    <script>
-        // 1. Validation & Theme
-        const userId = localStorage.getItem("userId");
-        const gameId = localStorage.getItem("gameId-tic-tac-toe");
-        const theme = localStorage.getItem("theme") || "light";
-
-        if (!userId) window.open("../login.html", "_self");
-        if (!gameId) window.open("../play.html", "_self");
-        document.body.classList.add(theme);
-
-        // 2. Firebase Init
-        const firebaseConfig = {
-            apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
-            authDomain: "data-7c972.firebaseapp.com",
-            databaseURL: "https://data-7c972-default-rtdb.firebaseio.com",
-            projectId: "data-7c972",
-            storageBucket: "data-7c972.firebasestorage.app",
-            messagingSenderId: "628115358338",
-            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
-            measurementId: "G-RQX36JBB1Z"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const gameRef = db.ref(`data/project/game/games/tic-tac-toe/${gameId}`);
-
-        let gameState = null;
-        let myInfo = null;
-        let opponentInfo = null;
-
-        // 3. Real-time Listener
-        gameRef.on('value', (snapshot) => {
-            gameState = snapshot.val();
-            if (!gameState || !gameState.players) return;
-
-            const p1 = gameState.players[0];
-            const p2 = gameState.players[1];
-
-            myInfo = (p1.username === userId) ? p1 : p2;
-            opponentInfo = (p1.username === userId) ? p2 : p1;
-
-            // Init Board if needed
-            if (!gameState.board) {
-                if (userId === p1.username) gameRef.update({ board: Array(9).fill("") });
-                return;
-            }
-
-            render();
-            
-            // Logic for Computer Turn
-            if (opponentInfo.username === "computer" && !gameState.winner && isSymbolTurn(opponentInfo.symbol)) {
-                setTimeout(runComputerAI, 600);
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        const conf = { apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk", databaseURL: "https://data-7c972-default-rtdb.firebaseio.com" };
+        const db = getDatabase(initializeApp(conf)), gRef = ref(db, `data/project/game/games/tic-tac-toe/${gameId}`);
+        const st = document.getElementById('status'), bd = document.getElementById('board');
+        let ps = [], b = [], w = null, me = null;
+        for(let i=0; i<9; i++) bd.innerHTML += `<div class="cell" data-i="${i}"></div>`;
+        onValue(gRef, s => {
+            const d = s.val(); if(!d) return;
+            if(!d.board) update(gRef, {board: Array(9).fill("")});
+            ps = d.players || []; b = d.board || Array(9).fill(""); w = d.winner || null; me = ps.find(p => p.username === userId);
+            document.querySelectorAll('.cell').forEach((c, i) => {
+                c.innerText = b[i];
+                const p = ps.find(x => x.symbol === b[i]);
+                if(p) c.style.color = p.color;
+            });
+            if(w) st.innerHTML = w === "Draw" ? "Draw!" : `Winner: <span style="color:${ps.find(p=>p.username===w).color}">${w}</span>`;
+            else {
+                const turn = ps[b.filter(x=>x!=="").length % 2];
+                st.innerHTML = turn?.username === userId ? "Your Turn" : `Waiting for <span style="color:${turn?.color}">${turn?.username}</span>`;
             }
         });
-
-        function render() {
-            const cells = document.querySelectorAll('.cell');
-            const status = document.getElementById('status-display');
-            const board = gameState.board;
-
-            cells.forEach((cell, i) => {
-                cell.innerText = board[i];
-                cell.style.color = (board[i] === gameState.players[0].symbol) ? gameState.players[0].color : gameState.players[1].color;
-                cell.classList.toggle('disabled', board[i] !== "" || !!gameState.winner);
-            });
-
-            if (gameState.winner) {
-                status.innerText = gameState.winner === "draw" ? "It's a Draw!" : `Winner: ${gameState.winner}`;
-            } else {
-                const currentSymbol = getCurrentTurnSymbol();
-                const currentUsername = (myInfo.symbol === currentSymbol) ? "Your Turn" : `${opponentInfo.username}'s Turn`;
-                status.innerText = currentUsername;
-            }
-        }
-
-        function getCurrentTurnSymbol() {
-            const counts = gameState.board.reduce((acc, cur) => {
-                if (cur === gameState.players[0].symbol) acc.p1++;
-                if (cur === gameState.players[1].symbol) acc.p2++;
-                return acc;
-            }, {p1:0, p2:0});
-            return counts.p1 <= counts.p2 ? gameState.players[0].symbol : gameState.players[1].symbol;
-        }
-
-        function isSymbolTurn(symbol) {
-            return getCurrentTurnSymbol() === symbol;
-        }
-
-        function handleMove(index) {
-            if (gameState.winner || gameState.board[index] !== "" || !isSymbolTurn(myInfo.symbol)) return;
-            
-            const newBoard = [...gameState.board];
-            newBoard[index] = myInfo.symbol;
-            processWinCheck(newBoard, myInfo.username);
-        }
-
-        function processWinCheck(board, username) {
-            const winPaths = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            let winner = null;
-
-            for (let path of winPaths) {
-                if (board[path[0]] && board[path[0]] === board[path[1]] && board[path[0]] === board[path[2]]) {
-                    winner = "@" + username;
-                    break;
-                }
-            }
-
-            if (!winner && !board.includes("")) winner = "draw";
-
-            const updates = { board: board };
-            if (winner) updates.winner = winner;
-            gameRef.update(updates);
-        }
-
-        // 4. Computer AI (Minimax)
-        function runComputerAI() {
-            const board = [...gameState.board];
-            let bestScore = -Infinity;
-            let move;
-
-            for (let i = 0; i < 9; i++) {
-                if (board[i] === "") {
-                    board[i] = opponentInfo.symbol;
-                    let score = minimax(board, 0, false);
-                    board[i] = "";
-                    if (score > bestScore) {
-                        bestScore = score;
-                        move = i;
-                    }
-                }
-            }
-            if (move !== undefined) {
-                board[move] = opponentInfo.symbol;
-                processWinCheck(board, "computer");
-            }
-        }
-
-        function minimax(board, depth, isMaximizing) {
-            const result = checkInternalWin(board);
-            if (result === opponentInfo.symbol) return 10 - depth;
-            if (result === myInfo.symbol) return depth - 10;
-            if (result === "draw") return 0;
-
-            if (isMaximizing) {
-                let best = -Infinity;
-                for(let i=0; i<9; i++) {
-                    if(board[i] === "") {
-                        board[i] = opponentInfo.symbol;
-                        best = Math.max(best, minimax(board, depth + 1, false));
-                        board[i] = "";
-                    }
-                }
-                return best;
-            } else {
-                let best = Infinity;
-                for(let i=0; i<9; i++) {
-                    if(board[i] === "") {
-                        board[i] = myInfo.symbol;
-                        best = Math.min(best, minimax(board, depth + 1, true));
-                        board[i] = "";
-                    }
-                }
-                return best;
-            }
-        }
-
-        function checkInternalWin(b) {
-            const winPaths = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            for (let p of winPaths) {
-                if (b[p[0]] && b[p[0]] === b[p[1]] && b[p[0]] === b[p[2]]) return b[p[0]];
-            }
-            return b.includes("") ? null : "draw";
-        }
+        bd.addEventListener('click', e => {
+            const i = e.target.dataset.i, turn = ps[b.filter(x=>x!=="").length % 2];
+            if(w || b[i] || turn?.username !== userId) return;
+            const nb = [...b]; nb[i] = me.symbol;
+            const check = (x) => [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]].find(p => p.every(j => x[j] === me.symbol));
+            const up = { board: nb };
+            if(check(nb)) up.winner = userId; else if(!nb.includes("")) up.winner = "Draw";
+            update(gRef, up);
+        });
     </script>
 </body>
 </html>
