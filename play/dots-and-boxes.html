@@ -1,502 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dots and Boxes - Live</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        /* Theme Variables */
-        :root {
-            --bg-color: #ffffff;
-            --text-color: #000000;
-            --nav-bg: #ffffff;
-            --nav-border: black;
-            --board-bg: #f9f9f9;
-            --dot-color: #333333;
-            --line-empty: #e0e0e0;
-            --line-hover: #cccccc;
-            --box-empty: transparent;
-            --status-bg: #f0f0f0;
-        }
-
-        .dark {
-            --bg-color: #121212;
-            --text-color: #ffffff;
-            --nav-bg: #1e1e1e;
-            --nav-border: #444444;
-            --board-bg: #1e1e1e;
-            --dot-color: #bbbbbb;
-            --line-empty: #333333;
-            --line-hover: #555555;
-            --box-empty: transparent;
-            --status-bg: #2a2a2a;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        /* Navigation Bar Styles */
-        #nav-bar {
-            position: sticky;
-            top: 0px;
-            background-color: var(--nav-bg);
-            border-bottom: 5px solid var(--nav-border);
-            z-index: 1000;
-        }
-        #nav-links {
-            width: 100%;
-            display: flex;
-            justify-content: space-around;
-        }
-        .nav-link {
-            text-decoration: none;
-            color: inherit;
-            font-size: 2rem;
-            padding: 5px;
-        }
-        .nav-active {
-            color: green;
-        }
-
-        /* Game Layout */
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .status-panel {
-            background-color: var(--status-bg);
-            padding: 15px 30px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .status-panel h2 {
-            margin: 0 0 10px 0;
-            font-size: 1.5rem;
-        }
-
-        .scores {
-            display: flex;
-            justify-content: space-between;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-
-        .player-score {
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-
-        #game-board {
-            display: grid;
-            background-color: var(--board-bg);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            user-select: none;
-            touch-action: none;
-            gap: 0; /* Let grid manage exact spacing */
-        }
-
-        /* Grid Elements */
-        .dot {
-            width: 12px;
-            height: 12px;
-            background-color: var(--dot-color);
-            border-radius: 50%;
-            align-self: center;
-            justify-self: center;
-        }
-
-        .hline {
-            width: 100%;
-            height: 12px;
-            background-color: var(--line-empty);
-            cursor: pointer;
-            transition: background-color 0.2s;
-            border-radius: 6px;
-            align-self: center;
-        }
-
-        .vline {
-            width: 12px;
-            height: 100%;
-            background-color: var(--line-empty);
-            cursor: pointer;
-            transition: background-color 0.2s;
-            border-radius: 6px;
-            justify-self: center;
-        }
-
-        .hline.active:hover, .vline.active:hover {
-            background-color: var(--line-hover);
-        }
-
-        .box {
-            width: 100%;
-            height: 100%;
-            background-color: var(--box-empty);
-            transition: background-color 0.3s;
-            border-radius: 4px;
-        }
-
-        #winner-banner {
-            display: none;
-            margin-top: 20px;
-            font-size: 2rem;
-            font-weight: bold;
-            text-align: center;
-            padding: 15px;
-            border-radius: 10px;
-            animation: popIn 0.5s ease-out;
-        }
-
-        @keyframes popIn {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dots and Boxes</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body{margin:0;font-family:sans-serif;transition:0.3s}
+body.light{background-color:#fff;color:#000}
+body.dark{background-color:#121212;color:#fff}
+#nav-bar{position:sticky;top:0px;border-bottom:5px solid black;z-index:100}
+body.light #nav-bar{background-color:white}
+body.dark #nav-bar{background-color:#1e1e1e;border-color:white}
+#nav-links{width:100%;display:flex;justify-content:space-around}
+.nav-link{text-decoration:none;color:inherit;font-size:2rem;padding:5px}
+.nav-active{color:green}
+#status{text-align:center;font-size:1.5rem;margin:20px;font-weight:bold}
+#board{position:relative;margin:20px auto;user-select:none}
+.dot{position:absolute;width:12px;height:12px;background:#000;border-radius:50%;transform:translate(-6px,-6px);z-index:3}
+body.dark .dot{background:#fff}
+.line{position:absolute;background:#ddd;cursor:pointer;z-index:2}
+body.dark .line{background:#333}
+.line:hover{background:#bbb}
+body.dark .line:hover{background:#555}
+.box{position:absolute;opacity:0.6;z-index:1}
+</style>
 </head>
 <body>
-
-    <div id="nav-bar">
-        <div id="nav-links">
-            <a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
-            <a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
-            <a class="nav-link" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
-            <a class="nav-link nav-active" href="../play.html"><i class="fa-solid fa-play"></i></a>
-            <a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
-        </div>
-    </div>
-
-    <div class="game-container">
-        <div class="status-panel">
-            <h2 id="turn-indicator">Loading game...</h2>
-            <div class="scores" id="scores-container">
-                </div>
-        </div>
-
-        <div id="game-board"></div>
-
-        <div id="winner-banner"></div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-        // 1. Initial Auth and Validations
-        const userId = localStorage.getItem("userId");
-        if (!userId) {
-            window.open("../login.html", "_self");
-        }
-
-        const gameId = localStorage.getItem("gameId-dots-and-boxes");
-        if (!gameId) {
-            window.open("../play.html", "_self");
-        }
-
-        // 2. Theming
-        let theme = localStorage.getItem("theme");
-        if (!theme || (theme !== "dark" && theme !== "light")) {
-            theme = "light";
-            localStorage.setItem("theme", "light");
-        }
-        document.body.classList.add(theme);
-
-        // 3. Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
-            authDomain: "data-7c972.firebaseapp.com",
-            databaseURL: "https://data-7c972-default-rtdb.firebaseio.com",
-            projectId: "data-7c972",
-            storageBucket: "data-7c972.firebasestorage.app",
-            messagingSenderId: "628115358338",
-            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
-            measurementId: "G-RQX36JBB1Z"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const gameRef = ref(db, `data/project/game/games/dots-and-boxes/${gameId}`);
-
-        // Game State Variables
-        let gameState = null;
-        let myPlayerIndex = -1;
-        const boardEl = document.getElementById("game-board");
-
-        // 4. Listen to Database Changes
-        onValue(gameRef, (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
-
-            gameState = data;
-            
-            // Identify player
-            if (gameState.players) {
-                myPlayerIndex = gameState.players.findIndex(p => p.username === userId);
-            }
-
-            // Initialize missing structures in DB if required
-            if (!gameState.board || gameState.turn === undefined) {
-                if (myPlayerIndex === 0 || myPlayerIndex === 1) { 
-                    initializeBoardState();
-                }
-                return; // Wait for the update to trigger onValue again
-            }
-
-            renderBoard();
-            updateUI();
-        });
-
-        // 5. Initialize Board in Firebase
-        function initializeBoardState() {
-            const updates = {};
-            if (!gameState.board) {
-                updates[`data/project/game/games/dots-and-boxes/${gameId}/board`] = {
-                    hLines: {},
-                    vLines: {},
-                    boxes: {}
-                };
-            }
-            if (gameState.turn === undefined) {
-                updates[`data/project/game/games/dots-and-boxes/${gameId}/turn`] = 0; // Player 0 starts
-            }
-            update(ref(db), updates);
-        }
-
-        // 6. UI Updates
-        function updateUI() {
-            const turnIndicator = document.getElementById("turn-indicator");
-            const scoresContainer = document.getElementById("scores-container");
-            const winnerBanner = document.getElementById("winner-banner");
-
-            const p1 = gameState.players[0];
-            const p2 = gameState.players[1];
-            
-            // Calculate Scores
-            let p1Score = 0;
-            let p2Score = 0;
-            if (gameState.board && gameState.board.boxes) {
-                Object.values(gameState.board.boxes).forEach(boxOwner => {
-                    if (boxOwner === 0) p1Score++;
-                    if (boxOwner === 1) p2Score++;
-                });
-            }
-
-            // Update Scores Display
-            scoresContainer.innerHTML = `
-                <div class="player-score" style="color: ${p1.color}; border: 2px solid ${p1.color};">
-                    ${p1.username}: ${p1Score}
-                </div>
-                <div class="player-score" style="color: ${p2.color}; border: 2px solid ${p2.color};">
-                    ${p2.username}: ${p2Score}
-                </div>
-            `;
-
-            // Check Winner
-            if (gameState.winner) {
-                turnIndicator.innerHTML = "Game Over!";
-                turnIndicator.style.color = "inherit";
-                
-                const winnerPlayer = gameState.players.find(p => p.username === gameState.winner);
-                winnerBanner.style.display = "block";
-                winnerBanner.style.backgroundColor = winnerPlayer ? winnerPlayer.color : "gray";
-                winnerBanner.style.color = "#fff";
-                winnerBanner.innerText = `Winner: ${gameState.winner} 🎉`;
-                return;
-            }
-
-            // Turn Handling
-            const currentTurnPlayer = gameState.players[gameState.turn];
-            if (gameState.turn === myPlayerIndex) {
-                turnIndicator.innerText = "Your Turn!";
-                turnIndicator.style.color = currentTurnPlayer.color;
-            } else {
-                turnIndicator.innerText = `Opponent's Turn (${currentTurnPlayer.username})`;
-                turnIndicator.style.color = currentTurnPlayer.color;
-            }
-        }
-
-        // 7. Render Board Elements (Dots, Lines, Boxes)
-        function renderBoard() {
-            boardEl.innerHTML = ""; // Clear existing
-            
-            const r = gameState.row;
-            const c = gameState.column;
-            
-            // Fix applied: CSS Grid Setup - we MUST define both columns and rows.
-            // This ensures vertical lines and boxes are not collapsed.
-            let gridCols = "";
-            for(let i = 0; i < c * 2 + 1; i++) {
-                gridCols += (i % 2 === 0) ? "12px " : "60px ";
-            }
-            boardEl.style.gridTemplateColumns = gridCols.trim();
-
-            let gridRows = "";
-            for(let i = 0; i < r * 2 + 1; i++) {
-                gridRows += (i % 2 === 0) ? "12px " : "60px ";
-            }
-            boardEl.style.gridTemplateRows = gridRows.trim();
-
-            const hLinesState = gameState.board.hLines || {};
-            const vLinesState = gameState.board.vLines || {};
-            const boxesState = gameState.board.boxes || {};
-
-            for (let rowIdx = 0; rowIdx < r * 2 + 1; rowIdx++) {
-                for (let colIdx = 0; colIdx < c * 2 + 1; colIdx++) {
-                    const el = document.createElement("div");
-
-                    if (rowIdx % 2 === 0 && colIdx % 2 === 0) {
-                        // Dot
-                        el.className = "dot";
-                    } 
-                    else if (rowIdx % 2 === 0 && colIdx % 2 !== 0) {
-                        // Horizontal Line
-                        el.className = "hline";
-                        const logR = rowIdx / 2;
-                        const logC = (colIdx - 1) / 2;
-                        const key = `${logR}_${logC}`;
-                        
-                        if (hLinesState[key] !== undefined) {
-                            el.style.backgroundColor = gameState.players[hLinesState[key]].color;
-                        } else {
-                            el.classList.add("active");
-                            el.onclick = () => handleLineClick("h", logR, logC);
-                        }
-                    } 
-                    else if (rowIdx % 2 !== 0 && colIdx % 2 === 0) {
-                        // Vertical Line
-                        el.className = "vline";
-                        const logR = (rowIdx - 1) / 2;
-                        const logC = colIdx / 2;
-                        const key = `${logR}_${logC}`;
-
-                        if (vLinesState[key] !== undefined) {
-                            el.style.backgroundColor = gameState.players[vLinesState[key]].color;
-                        } else {
-                            el.classList.add("active");
-                            el.onclick = () => handleLineClick("v", logR, logC);
-                        }
-                    } 
-                    else {
-                        // Box
-                        el.className = "box";
-                        const logR = (rowIdx - 1) / 2;
-                        const logC = (colIdx - 1) / 2;
-                        const key = `${logR}_${logC}`;
-
-                        if (boxesState[key] !== undefined) {
-                            // Convert hex to rgba for softer box background
-                            const hexColor = gameState.players[boxesState[key]].color;
-                            el.style.backgroundColor = hexColor + "80"; // 50% opacity append
-                        }
-                    }
-                    boardEl.appendChild(el);
-                }
-            }
-        }
-
-        // 8. Handle Move Logic
-        function handleLineClick(type, logR, logC) {
-            if (gameState.winner) return; // Game over
-            if (gameState.turn !== myPlayerIndex) return; // Not my turn
-
-            const hLines = gameState.board.hLines || {};
-            const vLines = gameState.board.vLines || {};
-            const boxes = gameState.board.boxes || {};
-            
-            // Check if already taken (safeguard)
-            const key = `${logR}_${logC}`;
-            if (type === "h" && hLines[key] !== undefined) return;
-            if (type === "v" && vLines[key] !== undefined) return;
-
-            // Apply Move locally for logic check
-            if (type === "h") hLines[key] = myPlayerIndex;
-            if (type === "v") vLines[key] = myPlayerIndex;
-
-            // Check if a box was captured
-            let boxesCapturedThisTurn = 0;
-
-            const checkAndCaptureBox = (br, bc) => {
-                // Ensure box coordinates are valid
-                if (br < 0 || br >= gameState.row || bc < 0 || bc >= gameState.column) return;
-                
-                const top = hLines[`${br}_${bc}`];
-                const bottom = hLines[`${br + 1}_${bc}`];
-                const left = vLines[`${br}_${bc}`];
-                const right = vLines[`${br}_${bc + 1}`];
-
-                if (top !== undefined && bottom !== undefined && left !== undefined && right !== undefined) {
-                    if (boxes[`${br}_${bc}`] === undefined) {
-                        boxes[`${br}_${bc}`] = myPlayerIndex;
-                        boxesCapturedThisTurn++;
-                    }
-                }
-            };
-
-            if (type === "h") {
-                checkAndCaptureBox(logR - 1, logC); // Box above
-                checkAndCaptureBox(logR, logC);     // Box below
-            } else {
-                checkAndCaptureBox(logR, logC - 1); // Box left
-                checkAndCaptureBox(logR, logC);     // Box right
-            }
-
-            // Determine Next Turn
-            let nextTurn = gameState.turn;
-            if (boxesCapturedThisTurn === 0) {
-                // Switch turn if no box was captured
-                nextTurn = (gameState.turn === 0) ? 1 : 0;
-            }
-
-            // Determine Winner
-            let winner = null;
-            const totalBoxes = gameState.row * gameState.column;
-            const capturedBoxKeys = Object.keys(boxes);
-            
-            if (capturedBoxKeys.length === totalBoxes) {
-                let p0Wins = 0, p1Wins = 0;
-                capturedBoxKeys.forEach(k => {
-                    if (boxes[k] === 0) p0Wins++;
-                    if (boxes[k] === 1) p1Wins++;
-                });
-
-                if (p0Wins > p1Wins) winner = gameState.players[0].username;
-                else if (p1Wins > p0Wins) winner = gameState.players[1].username;
-                else winner = "Tie"; // Edge case if tie possible
-            }
-
-            // 9. Push to Firebase
-            const updates = {
-                [`data/project/game/games/dots-and-boxes/${gameId}/board/hLines`]: hLines,
-                [`data/project/game/games/dots-and-boxes/${gameId}/board/vLines`]: vLines,
-                [`data/project/game/games/dots-and-boxes/${gameId}/board/boxes`]: boxes,
-                [`data/project/game/games/dots-and-boxes/${gameId}/turn`]: nextTurn
-            };
-
-            if (winner) {
-                updates[`data/project/game/games/dots-and-boxes/${gameId}/winner`] = winner;
-            }
-
-            update(ref(db), updates);
-        }
-
-    </script>
+<div id="nav-bar">
+<div id="nav-links">
+<a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
+<a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
+<a class="nav-link" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
+<a class="nav-link nav-active" href="../play.html"><i class="fa-solid fa-play"></i></a>
+<a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
+</div>
+</div>
+<div id="status">Loading...</div>
+<div id="board"></div>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import{getDatabase,ref,onValue,update}from"https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+const u=localStorage.getItem("userId");if(!u)window.open("../login.html","_self");
+const g=localStorage.getItem("gameId-dots-and-boxes");if(!g)window.open("../play.html","_self");
+document.body.className=localStorage.getItem("theme")||"light";
+const app=initializeApp({apiKey:"AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",authDomain:"data-7c972.firebaseapp.com",databaseURL:"https://data-7c972-default-rtdb.firebaseio.com",projectId:"data-7c972",storageBucket:"data-7c972.firebasestorage.app",messagingSenderId:"628115358338",appId:"1:628115358338:web:8cdc80635cbfbcc2bfaa9b",measurementId:"G-RQX36JBB1Z"});
+const dbRef=ref(getDatabase(app),`data/project/game/games/dots-and-boxes/${g}`);
+let isMyTurn=false,myIdx=-1,oppIdx=-1,boardState={},r=0,c=0,rendered=false;
+onValue(dbRef,s=>{
+const d=s.val();if(!d)return;if(!d.board)update(dbRef,{board:{}});
+r=d.row;c=d.column;boardState=d.board||{};let turn=d.turn||0;
+myIdx=d.players.findIndex(p=>p.username===u);oppIdx=1-myIdx;
+let p=d.players,myColor=p[myIdx].color,oppColor=p[oppIdx].color,oppName=p[oppIdx].username;
+if(!rendered){
+let b=document.getElementById("board"),h="";b.style.width=`${c*50}px`;b.style.height=`${r*50}px`;
+for(let i=0;i<=r;i++)for(let j=0;j<=c;j++){
+h+=`<div class="dot" style="top:${i*50}px;left:${j*50}px"></div>`;
+if(j<c)h+=`<div class="line h" id="h_${i}_${j}" style="top:${i*50-6}px;left:${j*50+6}px;width:38px;height:12px"></div>`;
+if(i<r)h+=`<div class="line v" id="v_${i}_${j}" style="top:${i*50+6}px;left:${j*50-6}px;width:12px;height:38px"></div>`;
+if(i<r&&j<c)h+=`<div class="box" id="b_${i}_${j}" style="top:${i*50+6}px;left:${j*50+6}px;width:38px;height:38px"></div>`;
+}b.innerHTML=h;rendered=true;
+}
+document.querySelectorAll(".line, .box").forEach(el=>el.style.backgroundColor="");
+let scores=[0,0];
+for(let k in boardState){
+let el=document.getElementById(k);if(el)el.style.backgroundColor=p[boardState[k]].color;
+if(k.startsWith('b_'))scores[boardState[k]]++;
+}
+isMyTurn=(turn===myIdx);
+document.getElementById("status").innerHTML=d.winner?`Winner: ${d.winner}`:(isMyTurn?"Your turn":`<span style="color:${oppColor}">${oppName}'s turn</span>`);
+if(scores[0]+scores[1]===r*c&&!d.winner){
+let w=scores[0]>scores[1]?0:(scores[1]>scores[0]?1:-1);
+update(dbRef,{winner:w===-1?"Draw":p[w].username});
+}
+});
+document.addEventListener("click",e=>{
+if(!isMyTurn||!e.target.classList.contains("line")||boardState[e.target.id]>=0)return;
+let id=e.target.id,pts=id.split('_'),type=pts[0],i=parseInt(pts[1]),j=parseInt(pts[2]),upd={},boxCompleted=false;
+upd[`board/${id}`]=myIdx;boardState[id]=myIdx;
+const check=(x,y)=>{
+if(x>=0&&x<r&&y>=0&&y<c){
+if([`h_${x}_${y}`,`h_${x+1}_${y}`,`v_${x}_${y}`,`v_${x}_${y+1}`].every(e=>boardState[e]>=0)){
+upd[`board/b_${x}_${y}`]=myIdx;return true;
+}
+}return false;
+};
+if(type==='h'){if(check(i-1,j))boxCompleted=true;if(check(i,j))boxCompleted=true;}
+else{if(check(i,j-1))boxCompleted=true;if(check(i,j))boxCompleted=true;}
+upd['turn']=boxCompleted?myIdx:oppIdx;
+update(dbRef,upd);
+});
+</script>
 </body>
 </html>
