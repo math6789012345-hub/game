@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Dots and Boxes</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-body{margin:0;font-family:sans-serif;transition:0.3s}
+body{margin:0;font-family:sans-serif;transition:0.3s;overflow:hidden;height:100vh;display:flex;flex-direction:column}
 body.light{background-color:#fff;color:#000}
 body.dark{background-color:#121212;color:#fff}
 #nav-bar{position:sticky;top:0px;border-bottom:5px solid black;z-index:100}
@@ -15,15 +15,22 @@ body.dark #nav-bar{background-color:#1e1e1e;border-color:white}
 #nav-links{width:100%;display:flex;justify-content:space-around}
 .nav-link{text-decoration:none;color:inherit;font-size:2rem;padding:5px}
 .nav-active{color:green}
-#status{text-align:center;font-size:1.5rem;margin:20px;font-weight:bold}
-#board{position:relative;margin:20px auto;user-select:none}
+#info{text-align:center;padding:10px;z-index:10}
+#score{display:flex;justify-content:space-around;font-size:1.1rem;font-weight:bold;margin-bottom:5px}
+#status{font-size:1.3rem;font-weight:bold}
+#viewport{flex:1;position:relative;overflow:hidden;touch-action:none;background:#eee;margin:10px;border-radius:10px;border:2px solid #ccc}
+body.dark #viewport{background:#1a1a1a;border-color:#444}
+#board{position:absolute;transform-origin:0 0;user-select:none}
 .dot{position:absolute;width:12px;height:12px;background:#000;border-radius:50%;transform:translate(-6px,-6px);z-index:3}
 body.dark .dot{background:#fff}
 .line{position:absolute;background:#ddd;cursor:pointer;z-index:2}
 body.dark .line{background:#333}
-.line:hover{background:#bbb}
-body.dark .line:hover{background:#555}
 .box{position:absolute;opacity:0.6;z-index:1}
+@keyframes p{0%,100%{opacity:1}50%{opacity:0.3}}
+.last{animation:p 0.8s infinite;z-index:4;box-shadow:0 0 10px currentColor}
+#controls{position:absolute;bottom:20px;right:20px;display:flex;flex-direction:column;gap:10px;z-index:20}
+.btn{width:50px;height:50px;border-radius:50%;background:rgba(0,0,0,0.6);color:white;border:none;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+body.light .btn{background:rgba(255,255,255,0.8);color:black;border:1px solid #ccc}
 </style>
 </head>
 <body>
@@ -36,60 +43,67 @@ body.dark .line:hover{background:#555}
 <a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
 </div>
 </div>
-<div id="status">Loading...</div>
+<div id="info">
+<div id="score"><span id="p1-score"></span><span id="p2-score"></span></div>
+<div id="status">Connecting...</div>
+</div>
+<div id="viewport">
 <div id="board"></div>
+<div id="controls">
+<button class="btn" onclick="zoom(0.1)"><i class="fa-solid fa-plus"></i></button>
+<button class="btn" onclick="zoom(-0.1)"><i class="fa-solid fa-minus"></i></button>
+<button class="btn" onclick="resetView()"><i class="fa-solid fa-arrows-to-dot"></i></button>
+</div>
+</div>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import{getDatabase,ref,onValue,update}from"https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-const u=localStorage.getItem("userId");if(!u)window.open("../login.html","_self");
-const g=localStorage.getItem("gameId-dots-and-boxes");if(!g)window.open("../play.html","_self");
+const u=localStorage.getItem("userId"),g=localStorage.getItem("gameId-dots-and-boxes");
+if(!u)window.open("../login.html","_self");if(!g)window.open("../play.html","_self");
 document.body.className=localStorage.getItem("theme")||"light";
 const app=initializeApp({apiKey:"AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",authDomain:"data-7c972.firebaseapp.com",databaseURL:"https://data-7c972-default-rtdb.firebaseio.com",projectId:"data-7c972",storageBucket:"data-7c972.firebasestorage.app",messagingSenderId:"628115358338",appId:"1:628115358338:web:8cdc80635cbfbcc2bfaa9b",measurementId:"G-RQX36JBB1Z"});
-const dbRef=ref(getDatabase(app),`data/project/game/games/dots-and-boxes/${g}`);
-let isMyTurn=false,myIdx=-1,oppIdx=-1,boardState={},r=0,c=0,rendered=false;
+const db=getDatabase(app),dbRef=ref(db,`data/project/game/games/dots-and-boxes/${g}`);
+let isMyTurn=false,myIdx=-1,oppIdx=-1,boardState={},r=0,c=0,rendered=false,scale=1,posX=50,posY=50;
+const board=document.getElementById("board"),vp=document.getElementById("viewport");
+function updateTransform(){board.style.transform=`translate(${posX}px,${posY}px) scale(${scale})`}
+window.zoom=s=>{scale=Math.max(0.3,Math.min(3,scale+s));updateTransform()};
+window.resetView=()=>{scale=1;posX=50;posY=50;updateTransform()};
+let isPanning=false,startX,startY;
+vp.onpointerdown=e=>{if(e.target.classList.contains('line'))return;isPanning=true;startX=e.clientX-posX;startY=e.clientY-posY;vp.setPointerCapture(e.pointerId)};
+vp.onpointermove=e=>{if(!isPanning)return;posX=e.clientX-startX;posY=e.clientY-startY;updateTransform()};
+vp.onpointerup=()=>isPanning=false;
 onValue(dbRef,s=>{
-const d=s.val();if(!d)return;if(!d.board)update(dbRef,{board:{}});
-r=d.row;c=d.column;boardState=d.board||{};let turn=d.turn||0;
+const d=s.val();if(!d)return;r=d.row;c=d.column;boardState=d.board||{};let turn=d.turn||0;
 myIdx=d.players.findIndex(p=>p.username===u);oppIdx=1-myIdx;
-let p=d.players,myColor=p[myIdx].color,oppColor=p[oppIdx].color,oppName=p[oppIdx].username;
+let p=d.players,oppColor=p[oppIdx].color,oppName=p[oppIdx].username;
 if(!rendered){
-let b=document.getElementById("board"),h="";b.style.width=`${c*50}px`;b.style.height=`${r*50}px`;
-for(let i=0;i<=r;i++)for(let j=0;j<=c;j++){
+let h="";for(let i=0;i<=r;i++)for(let j=0;j<=c;j++){
 h+=`<div class="dot" style="top:${i*50}px;left:${j*50}px"></div>`;
 if(j<c)h+=`<div class="line h" id="h_${i}_${j}" style="top:${i*50-6}px;left:${j*50+6}px;width:38px;height:12px"></div>`;
 if(i<r)h+=`<div class="line v" id="v_${i}_${j}" style="top:${i*50+6}px;left:${j*50-6}px;width:12px;height:38px"></div>`;
 if(i<r&&j<c)h+=`<div class="box" id="b_${i}_${j}" style="top:${i*50+6}px;left:${j*50+6}px;width:38px;height:38px"></div>`;
-}b.innerHTML=h;rendered=true;
+}board.innerHTML=h;rendered=true;updateTransform();
 }
-document.querySelectorAll(".line, .box").forEach(el=>el.style.backgroundColor="");
-let scores=[0,0];
-for(let k in boardState){
+document.querySelectorAll(".line, .box").forEach(el=>{el.style.backgroundColor="";el.classList.remove("last")});
+let scores=[0,0];for(let k in boardState){
 let el=document.getElementById(k);if(el)el.style.backgroundColor=p[boardState[k]].color;
 if(k.startsWith('b_'))scores[boardState[k]]++;
 }
+if(d.lastMove&&document.getElementById(d.lastMove))document.getElementById(d.lastMove).classList.add("last");
 isMyTurn=(turn===myIdx);
+document.getElementById("p1-score").innerText=`Your score: ${scores[myIdx]||0}`;
+document.getElementById("p2-score").innerText=`${oppName}'s score: ${scores[oppIdx]||0}`;
 document.getElementById("status").innerHTML=d.winner?`Winner: ${d.winner}`:(isMyTurn?"Your turn":`<span style="color:${oppColor}">${oppName}'s turn</span>`);
-if(scores[0]+scores[1]===r*c&&!d.winner){
-let w=scores[0]>scores[1]?0:(scores[1]>scores[0]?1:-1);
-update(dbRef,{winner:w===-1?"Draw":p[w].username});
-}
+if(scores[0]+scores[1]===r*c&&!d.winner)update(dbRef,{winner:scores[myIdx]>scores[oppIdx]?u:(scores[oppIdx]>scores[myIdx]?oppName:"Draw")});
 });
-document.addEventListener("click",e=>{
+board.onclick=e=>{
 if(!isMyTurn||!e.target.classList.contains("line")||boardState[e.target.id]>=0)return;
-let id=e.target.id,pts=id.split('_'),type=pts[0],i=parseInt(pts[1]),j=parseInt(pts[2]),upd={},boxCompleted=false;
-upd[`board/${id}`]=myIdx;boardState[id]=myIdx;
-const check=(x,y)=>{
-if(x>=0&&x<r&&y>=0&&y<c){
-if([`h_${x}_${y}`,`h_${x+1}_${y}`,`v_${x}_${y}`,`v_${x}_${y+1}`].every(e=>boardState[e]>=0)){
-upd[`board/b_${x}_${y}`]=myIdx;return true;
-}
-}return false;
+let id=e.target.id,pts=id.split('_'),t=pts[0],i=parseInt(pts[1]),j=parseInt(pts[2]),upd={},bx=false;
+upd[`board/${id}`]=myIdx;boardState[id]=myIdx;upd['lastMove']=id;
+const chk=(x,y)=>{if(x>=0&&x<r&&y>=0&&y<c&&[`h_${x}_${y}`,`h_${x+1}_${y}`,`v_${x}_${y}`,`v_${x}_${y+1}`].every(e=>boardState[e]>=0)){upd[`board/b_${x}_${y}`]=myIdx;return true}return false};
+if(t==='h'){if(chk(i-1,j))bx=true;if(chk(i,j))bx=true}else{if(chk(i,j-1))bx=true;if(chk(i,j))bx=true}
+upd['turn']=bx?myIdx:oppIdx;update(dbRef,upd);
 };
-if(type==='h'){if(check(i-1,j))boxCompleted=true;if(check(i,j))boxCompleted=true;}
-else{if(check(i,j-1))boxCompleted=true;if(check(i,j))boxCompleted=true;}
-upd['turn']=boxCompleted?myIdx:oppIdx;
-update(dbRef,upd);
-});
 </script>
 </body>
 </html>
