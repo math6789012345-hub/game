@@ -1,204 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Unicode Chess</title>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        :root {
-            --bg-light: #f4f4f4; --text-light: #000; --sq-white: #eeeed2; --sq-black: #769656;
-            --bg-dark: #121212; --text-dark: #fff; --sq-white-d: #444; --sq-black-d: #222;
-        }
-
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; transition: 0.3s; }
-        body.light { background: var(--bg-light); color: var(--text-light); }
-        body.dark { background: var(--bg-dark); color: var(--text-dark); }
-
-        #nav-bar { position: sticky; top: 0; background: white; border-bottom: 5px solid black; z-index: 100; }
-        body.dark #nav-bar { background: #1f1f1f; border-bottom-color: #444; }
-        #nav-links { width: 100%; display: flex; justify-content: space-around; }
-        .nav-link { text-decoration: none; color: inherit; font-size: 2rem; padding: 5px; }
-        .nav-active { color: green; }
-
-        .container { max-width: 500px; margin: 20px auto; text-align: center; padding: 10px; }
-        
-        /* Chess Board Grid */
-        #chess-board {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr);
-            width: 100%;
-            aspect-ratio: 1/1;
-            border: 2px solid #333;
-            user-select: none;
-        }
-
-        .square {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            cursor: pointer;
-        }
-
-        /* Theming Squares */
-        body.light .white-sq { background: var(--sq-white); }
-        body.light .black-sq { background: var(--sq-black); }
-        body.dark .white-sq { background: var(--sq-white-d); }
-        body.dark .black-sq { background: var(--sq-black-d); }
-        
-        .selected { background-color: #f7f769 !important; }
-        .last-move { background-color: #bac94d !important; }
-
-        #status { font-size: 1.5rem; margin: 15px 0; font-weight: bold; }
-        .opp-turn { color: #d32f2f; }
-        .my-turn { color: #2e7d32; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Live Chess</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<style>
+:root{--bg:#fff;--tc:#000;--sqw:#eeeed2;--sqb:#769656}
+body.dark{--bg:#121212;--tc:#fff;--sqw:#444;--sqb:#222}
+body{background:var(--bg);color:var(--tc);margin:0;font-family:sans-serif;overflow:hidden;display:flex;flex-direction:column;height:100vh}
+#nav-bar{position:sticky;top:0;background-color:var(--bg);border-bottom:5px solid var(--tc);z-index:1000;flex-shrink:0}
+#nav-links{width:100%;display:flex;justify-content:space-around}
+.nav-link{text-decoration:none;color:inherit;font-size:2rem;padding:5px}
+.nav-active{color:green}
+#ga{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;box-sizing:border-box}
+#board-container{width:min(90vw, 90vh - 150px);aspect-ratio:1/1;margin:auto;display:flex;align-items:center;justify-content:center}
+#board{width:100%;height:100%;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:2px solid var(--tc);box-sizing:border-box}
+.sq{display:flex;align-items:center;justify-content:center;font-size:min(8vw, 4vh, 35px);cursor:pointer;user-select:none;position:relative;width:100%;height:100%;box-sizing:border-box}
+.w{background:var(--sqw)}.b{background:var(--sqb)}
+.h::after{content:'';position:absolute;width:25%;height:25%;background:rgba(0,0,0,0.2);border-radius:50%;pointer-events:none}
+.s{background:rgba(255,255,51,0.5)!important}
+.cap{background:rgba(255,0,0,0.4)!important}
+.chk{background:rgba(255,0,0,0.8)!important}
+#st{font-size:1.2rem;margin-bottom:10px;height:1.5rem;text-align:center}
+#promo{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg);padding:15px;border:3px solid var(--tc);z-index:2000;box-shadow:0 0 20px rgba(0,0,0,0.5)}
+.p-btn{font-size:2.5rem;cursor:pointer;margin:5px;padding:5px;display:inline-block;border:1px solid #ccc;color:#000;background:#eee}
+</style>
 </head>
-<body class="light">
-
-    <div id="nav-bar">
-        <div id="nav-links">
-            <a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
-            <a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
-            <a class="nav-link" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
-            <a class="nav-link nav-active" href="../play.html"><i class="fa-solid fa-play"></i></a>
-            <a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
-        </div>
-    </div>
-
-    <div class="container">
-        <div id="status">Connecting...</div>
-        <div id="chess-board"></div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-
-        const config = {
-            apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
-            authDomain: "data-7c972.firebaseapp.com",
-            databaseURL: "https://data-7c972-default-rtdb.firebaseio.com",
-            projectId: "data-7c972",
-            storageBucket: "data-7c972.firebasestorage.app",
-            messagingSenderId: "628115358338",
-            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b"
-        };
-
-        const uID = localStorage.getItem("userId") || (window.location.href = "../login.html");
-        const gID = localStorage.getItem("gameId-chess") || (window.location.href = "../play.html");
-        const theme = localStorage.getItem("theme") || "light";
-        document.body.className = theme;
-
-        const app = initializeApp(config);
-        const db = getDatabase(app);
-        const gameRef = ref(db, `data/project/game/games/chess/${gID}`);
-        
-        const game = new Chess();
-        const boardEl = document.getElementById('chess-board');
-        let myColor = 'w';
-        let opponent = "Opponent";
-        let selectedSq = null;
-
-        const unicodePieces = {
-            'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟',
-            'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙'
-        };
-
-        async function init() {
-            const snap = await get(gameRef);
-            const data = snap.val();
-            if(!data) return;
-
-            const me = data.players.find(p => p.username === uID);
-            const opp = data.players.find(p => p.username !== uID);
-            myColor = me.color === 'white' ? 'w' : 'b';
-            opponent = opp ? opp.username : "Opponent";
-
-            if(!data.board) set(ref(db, `data/project/game/games/chess/${gID}/board`), game.fen());
-            
-            onValue(ref(db, `data/project/game/games/chess/${gID}/board`), (s) => {
-                game.load(s.val());
-                renderBoard();
-                checkGameOver();
-            });
-
-            onValue(ref(db, `data/project/game/games/chess/${gID}/winner`), (s) => {
-                if(s.val()) document.getElementById('status').innerText = "Winner: " + s.val();
-            });
-        }
-
-        function renderBoard() {
-            boardEl.innerHTML = '';
-            const boardData = game.board();
-            const isBlack = myColor === 'b';
-
-            // Flip view for black player
-            for (let r = 0; r < 8; r++) {
-                for (let c = 0; c < 8; c++) {
-                    const row = isBlack ? 7 - r : r;
-                    const col = isBlack ? 7 - c : c;
-                    const piece = boardData[row][col];
-                    const squareId = String.fromCharCode(97 + col) + (8 - row);
-                    
-                    const div = document.createElement('div');
-                    div.className = `square ${(row + col) % 2 === 0 ? 'white-sq' : 'black-sq'}`;
-                    div.dataset.id = squareId;
-                    div.innerHTML = piece ? unicodePieces[piece.color === 'w' ? piece.type.toUpperCase() : piece.type] : '';
-                    
-                    if(selectedSq === squareId) div.classList.add('selected');
-                    div.onclick = () => handleSquareClick(squareId);
-                    boardEl.appendChild(div);
-                }
-            }
-            updateTurnUI();
-        }
-
-        function handleSquareClick(sq) {
-            if (game.turn() !== myColor) return;
-
-            if (selectedSq === sq) {
-                selectedSq = null;
-            } else if (selectedSq) {
-                const move = game.move({ from: selectedSq, to: sq, promotion: 'q' });
-                if (move) {
-                    set(ref(db, `data/project/game/games/chess/${gID}/board`), game.fen());
-                    selectedSq = null;
-                } else {
-                    selectedSq = sq; // Change selection
-                }
-            } else {
-                const piece = game.get(sq);
-                if (piece && piece.color === myColor) selectedSq = sq;
-            }
-            renderBoard();
-        }
-
-        function updateTurnUI() {
-            const status = document.getElementById('status');
-            const turn = game.turn();
-            if (turn === myColor) {
-                status.innerHTML = `<span class="my-turn">Your Turn</span>`;
-            } else {
-                status.innerHTML = `<span class="opp-turn">${opponent}'s Turn</span>`;
-            }
-        }
-
-        function checkGameOver() {
-            if (game.game_over()) {
-                let winner = "Draw";
-                if (game.in_checkmate()) winner = game.turn() === 'w' ? "black" : "white";
-                // Simplified winner update
-                set(ref(db, `data/project/game/games/chess/${gID}/winner`), winner);
-            }
-        }
-
-        init();
-    </script>
+<body>
+<div id="nav-bar">
+<div id="nav-links">
+<a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
+<a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
+<a class="nav-link" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
+<a class="nav-link nav-active" href="../play.html"><i class="fa-solid fa-play"></i></a>
+<a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
+</div>
+</div>
+<div id="ga">
+<div id="st">Initializing...</div>
+<div id="board-container"><div id="board"></div></div>
+</div>
+<div id="promo"><b>Promotion</b><div id="p-opts"></div></div>
+<script>
+const u=localStorage.getItem("userId"),g=localStorage.getItem("gameId-chess");
+if(!u)window.location.href="../login.html";if(!g)window.location.href="../play.html";
+document.body.className=localStorage.getItem("theme")||"light";
+</script>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import{getDatabase,ref,onValue,set,get}from"https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+const db=getDatabase(initializeApp({apiKey:"AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",authDomain:"data-7c972.firebaseapp.com",databaseURL:"https://data-7c972-default-rtdb.firebaseio.com",projectId:"data-7c972",storageBucket:"data-7c972.firebasestorage.app",messagingSenderId:"628115358338",appId:"1:628115358338:web:8cdc80635cbfbcc2bfaa9b"}));
+const gr=ref(db,`data/project/game/games/chess/${g}`),br=ref(db,`data/project/game/games/chess/${g}/board`),wr=ref(db,`data/project/game/games/chess/${g}/winner`);
+let myC='w',oppN='Opponent',ch=new Chess(),sel=null,pM=null;
+const pcs={p:'♟',n:'♞',b:'♝',r:'♜',q:'♛',k:'♚',P:'♙',N:'♘',B:'♗',R:'♖',Q:'♕',K:'♔'};
+get(gr).then(s=>{
+let d=s.val();if(d&&d.players){let m=d.players.find(p=>p.username===u),o=d.players.find(p=>p.username!==u);if(m)myC=m.color==='white'?'w':'b';if(o)oppN=o.username;}
+onValue(br,s=>{let f=s.val();if(f){ch.load(f);upd();}else set(br,ch.fen());});
+});
+function clk(id){
+if(ch.turn()!==myC||ch.game_over())return;
+const sqEl=document.getElementById(id);
+if(sel && (sqEl.classList.contains('h')||sqEl.classList.contains('cap'))){
+let p=ch.get(sel);
+if(p.type==='p'&&(id[1]==='8'||id[1]==='1')){pM={from:sel,to:id};document.getElementById('promo').style.display='block';genP();return;}
+exec({from:sel,to:id,promotion:'q'});return;
+}
+sel=(ch.get(id)&&ch.get(id).color===myC)?id:null;upd();
+}
+function genP(){
+const o=document.getElementById('p-opts');o.innerHTML='';
+['q','r','b','n'].forEach(t=>{
+let b=document.createElement('span');b.className='p-btn';b.innerText=pcs[myC==='w'?t.toUpperCase():t];
+b.onclick=()=>{exec({...pM,promotion:t});document.getElementById('promo').style.display='none';};o.appendChild(b);
+});
+}
+function exec(m){if(ch.move(m)){set(br,ch.fen());if(ch.game_over())set(wr,u);sel=null;}}
+function upd(){
+const bd=document.getElementById('board');bd.innerHTML='';
+const b=ch.board(),turn=ch.turn(),isT=turn===myC,moves=sel?ch.moves({square:sel,verbose:true}):[];
+for(let r=0;r<8;r++){for(let c=0;c<8;c++){
+let tr=myC==='b'?7-r:r,tc=myC==='b'?7-c:c,id=String.fromCharCode(97+tc)+(8-tr),p=b[tr][tc];
+let sq=document.createElement('div');sq.className=`sq ${(tr+tc)%2===0?'w':'b'}`;sq.id=id;sq.onclick=()=>clk(id);
+if(p){sq.innerText=p.color==='w'?pcs[p.type.toUpperCase()]:pcs[p.type];if(p.type==='k'&&ch.in_check()&&p.color===turn)sq.classList.add('chk');}
+if(sel===id)sq.classList.add('s');
+moves.forEach(m=>{if(m.to===id)sq.classList.add(m.captured?'cap':'h');});
+bd.appendChild(sq);
+}}
+let st=document.getElementById('st');st.innerText=isT?"Your Turn":`${oppN}'s Turn`;
+st.style.cssText=`opacity:${isT?0.5:1};font-weight:${isT?400:700};color:${isT?'inherit':'#e74c3c'}`;
+}
+</script>
 </body>
 </html>
