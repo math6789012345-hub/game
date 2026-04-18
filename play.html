@@ -37,38 +37,24 @@
         .nav-active {
             color: var(--theme-nav-active-color);
         }
-        #game-names-container {
+        #game-names-container, #game-players-container {
             display: flex;
             gap: 7.5px;
             align-items: center;
             flex-flow: wrap;
+            border: 1px solid var(--theme-color);
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
         }
-        .game-name-container {
+        .game-name-container, .game-player-container {
             border: 1px solid var(--theme-color);
             border-radius: 20px;
             padding: 2.5px 7.5px;
             font-size: 0.75rem;
             background-color: var(--theme-background-color);
         }
-        .game-name-container-active {
-            color: var(--theme-background-color);
-            border: 1px solid var(--theme-nav-color);
-            background-color: var(--theme-color);
-        }
-        #game-players-container {
-            display: flex;
-            gap: 7.5px;
-            align-items: center;
-            flex-flow: wrap;
-        }
-        .game-player-container {
-            border: 1px solid var(--theme-color);
-            border-radius: 20px;
-            padding: 2.5px 7.5px;
-            font-size: 0.75rem;
-            background-color: var(--theme-background-color);
-        }
-        .game-player-container-active {
+        .game-name-container-active, .game-player-container-active {
             color: var(--theme-background-color);
             border: 1px solid var(--theme-nav-color);
             background-color: var(--theme-color);
@@ -100,8 +86,12 @@
         <a href="games.html">Create Game</a>
         <br><br>
     </div>
-    <div id="game-names-container"></div>
-    <div id="game-players-container"></div>
+    <div id="game-names-container">
+        <span>Filter Game:</span>
+    </div>
+    <div id="game-players-container">
+        <span>Filter Player:</span>
+    </div>
     <div>
         <span id="game-count">Searching...</span>
         <br><br>
