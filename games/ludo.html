@@ -194,31 +194,38 @@
             let p2Username = document.querySelector("#p2").value;
             let p3Username = document.querySelector("#p3").value
             let p4Username = document.querySelector("#p4").value
-            if (p2Username && p3Username && p4Username) {
+            if (p2Username || p3Username || p4Username) {
                 let gameId = "id-" + Date.now() + "-" + crypto.randomUUID();
                 let p1 = localStorage.getItem("userId");
                 let p2 = p2Username.slice(1);
                 let p3 = p3Username.slice(1);
                 let p4 = p4Username.slice(1);
+                let ludo_players = [
+                    {
+                        "username": p1,
+                        "color": p1Color
+                    }
+                ];
+                if (p2Username) {
+                    ludo_players.push({
+                        "username": p2,
+                        "color": p2Color
+                    });
+                }
+                if (p3Username) {
+                    ludo_players.push({
+                        "username": p3,
+                        "color": p3Color
+                    });
+                }
+                if (p4Username) {
+                    ludo_players.push({
+                        "username": p4,
+                        "color": p4Color
+                    });
+                }
                 addFirebaseData("data/project/game/games/ludo/" + gameId, {
-                    "players": [
-                        {
-                            "username": p1,
-                            "color": p1Color
-                        },
-                        {
-                            "username": p2,
-                            "color": p2Color
-                        },
-                        {
-                            "username": p3,
-                            "color": p3Color
-                        },
-                        {
-                            "username": p4,
-                            "color": p4Color
-                        }
-                    ],
+                    "players": ludo_players
                 }).then((success) => {
                     alert(success);
                     localStorage.setItem("gameId-ludo", gameId);
