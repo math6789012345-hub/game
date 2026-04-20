@@ -159,11 +159,22 @@
         let game_players = [];
         let selected_game_players = [];
         
-        document.addEventListener("DOMContentLoaded", async () => {
+        document.addEventListener("DOMContentLoaded", init);
+        
+        async function init() {
             if (localStorage.getItem("userId") === null) {
                 alert("Login");
                 window.open("login.html", "_self");
             } else {
+                games = []
+                game_names = [];
+                selected_game_names = [];
+                game_players = [];
+                selected_game_players = [];
+                document.querySelector("#game-names-container").innerHTML = "<span>Filter Game:</span>";
+                document.querySelector("#game-players-container").innerHTML = "<span>Filter Player:</span>";
+                document.querySelector("#game-count").innerText = "Loading...";
+                
                 games = await getFirebaseData("data/project/game/games");
                 games = Object.entries(games).flatMap(([gameName, games]) => {
                     return Object.entries(games).map(([gameId, details]) => {
@@ -231,7 +242,7 @@
                     game_players_container.appendChild(game_player_container);
                 });
             }
-        });
+        }
         
         function show_games(all_games) {
             let gameCount = document.querySelector("#game-count");
@@ -319,6 +330,21 @@
                     window.open("play/" + value.name + ".html", "_self");
                 });
                 gameContainer.appendChild(gamePlayButton);
+                
+                if (value.players[0] === userId) {
+                    let gameDeleteButton = document.createElement("button");
+                    gameDeleteButton.classList.add("game-delete-button");
+                    gameDeleteButton.innerText = "Delete";
+                    gameDeleteButton.addEventListener("click", () => {
+                        removeFirebaseData("data/project/game/games/" + value.name + "/" + value.id).then((success) => {
+                            alert(success);
+                            init();
+                        }).catch((error) => {
+                            alert(error);
+                        });
+                    });
+                    gameContainer.appendChild(gameDeleteButton);
+                }
             }
         }
     </script>
