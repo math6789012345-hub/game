@@ -331,7 +331,7 @@
                 });
                 gameContainer.appendChild(gamePlayButton);
                 
-                if (value.players[0] === userId) {
+                if (!value.winner) {
                     let gameDeleteButton = document.createElement("button");
                     gameDeleteButton.classList.add("game-delete-button");
                     gameDeleteButton.innerText = "Delete";
