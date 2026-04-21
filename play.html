@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --theme-color: black;
+            --theme-background-color: white;
+            --theme-nav-color: #eee;
+            --theme-nav-active-color: lightgreen;
+        }
+        body {
+            color: var(--theme-color);
+            background-color: var(--theme-background-color);
+        }
+        #nav-bar {
+            position: sticky;
+            top: 0px;
+            border-bottom: 5px solid var(--theme-nav-color);
+            background-color: var(--theme-background-color);
+        }
+        #nav-links {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            color: var(--theme-nav-color);
+        }
+        .nav-link {
+            text-decoration: none;
+            color: inherit;
+            font-size: 2rem;
+            padding: 5px;
+        }
+        .nav-active {
+            color: var(--theme-nav-active-color);
+        }
+        #game-names-container, #game-players-container {
+            display: flex;
+            gap: 7.5px;
+            align-items: center;
+            flex-flow: wrap;
+            border: 1px solid var(--theme-color);
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .game-name-container, .game-player-container {
+            border: 1px solid var(--theme-color);
+            border-radius: 20px;
+            padding: 2.5px 7.5px;
+            font-size: 0.75rem;
+            background-color: var(--theme-background-color);
+        }
+        .game-name-container-active, .game-player-container-active {
+            color: var(--theme-background-color);
+            border: 1px solid var(--theme-nav-color);
+            background-color: var(--theme-color);
+        }
+        #games-container {
+            border: 1px solid var(--theme-color);
+            border-radius: 10px;
+        }
+        .game-container {
+            border: 1px solid var(--theme-color);
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="nav-bar">
+        <div id="nav-links">
+            <a class="nav-link" href="index.html"><i class="fa-solid fa-home"></i></a>
+            <a class="nav-link" href="profile.html"><i class="fa-solid fa-user"></i></a>
+            <a class="nav-link" href="games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a class="nav-link nav-active" href="play.html"><i class="fa-solid fa-play"></i></a>
+            <a class="nav-link" href="settings.html"><i class="fa-solid fa-gear"></i></a>
+        </div>
+    </div>
+    <div>
+        <br>
+        <a href="games.html">Create Game</a>
+        <br><br>
+    </div>
+    <div id="game-names-container">
+        <span>Filter Game:</span>
+    </div>
+    <div id="game-players-container">
+        <span>Filter Player:</span>
+    </div>
+    <div>
+        <span id="game-count">Searching...</span>
+        <br><br>
+    </div>
+    <div id="games-container">
+        
+    </div>
+    <script type="module">
+        // Import Firebase from CDNs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
+            authDomain: "data-7c972.firebaseapp.com",
+            databaseURL: "https://data-7c972-default-rtdb.firebaseio.com",
+            projectId: "data-7c972",
+            storageBucket: "data-7c972.firebasestorage.app",
+            messagingSenderId: "628115358338",
+            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
+            measurementId: "G-RQX36JBB1Z"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- CRUD Functions (From previous step) ---
+
+        async function getFirebaseData(path) {
+            const dbRef = ref(db, path);
+            const snapshot = await get(dbRef);
+            if (snapshot.exists()) {
+                return snapshot.val();
+            } else {
+                return "No data available at this path.";
+            }
+        }
+
+        async function removeFirebaseData(path) {
+            const dbRef = ref(db, path);
+            await remove(dbRef);
+            return "Data removed successfully!";
+        }
+        
+        // --- add data
+        
+        let theme = localStorage.getItem("theme") || "light";
+        if (theme === "light") {
+            document.documentElement.style.setProperty('--theme-color', 'black');
+            document.documentElement.style.setProperty('--theme-background-color', 'white');
+            document.documentElement.style.setProperty('--theme-nav-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'green');
+        } else {
+            document.documentElement.style.setProperty('--theme-color', 'white');
+            document.documentElement.style.setProperty('--theme-background-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-color', '#eee');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'lightgreen');
+        }
+        
+        let games = []
+        let game_names = [];
+        let selected_game_names = [];
+        let game_players = [];
+        let selected_game_players = [];
+        
+        document.addEventListener("DOMContentLoaded", init);
+        
+        async function init() {
+            if (localStorage.getItem("userId") === null) {
+                alert("Login");
+                window.open("login.html", "_self");
+            } else {
+                games = []
+                game_names = [];
+                selected_game_names = [];
+                game_players = [];
+                selected_game_players = [];
+                document.querySelector("#game-names-container").innerHTML = "<span>Filter Game:</span>";
+                document.querySelector("#game-players-container").innerHTML = "<span>Filter Player:</span>";
+                document.querySelector("#game-count").innerText = "Loading...";
+                
+                games = await getFirebaseData("data/project/game/games");
+                games = Object.entries(games).flatMap(([gameName, games]) => {
+                    return Object.entries(games).map(([gameId, details]) => {
+                        return {
+                            "id": gameId,
+                            "timeStamp": parseInt(gameId.split("-")[1]),
+                            "name": gameName,
+                            "players": details.players.map(p => p.username),
+                            "winner": details.winner
+                        };
+                    });
+                });
+                games = games.filter(game => game.players.includes(localStorage.getItem("userId")));
+                show_games(games);
+                
+                game_names = [...new Set(games.map(game => game.name))];
+                game_names = game_names.sort();
+                let game_names_container = document.querySelector("#game-names-container");
+                game_names.forEach(game_name => {
+                    let game_name_container = document.createElement("span");
+                    game_name_container.classList.add("game-name-container");
+                    game_name_container.innerText = game_name;
+                    
+                    game_name_container.addEventListener("click", () => {
+                        if (game_name_container.classList.contains("game-name-container-active")) {
+                            game_name_container.classList.remove("game-name-container-active");
+                            game_name_container.innerText = game_name;
+                            if (selected_game_names.includes(game_name)) {
+                                selected_game_names = selected_game_names.filter(g => g !== game_name);
+                            }
+                        } else {
+                            game_name_container.classList.add("game-name-container-active");
+                            game_name_container.innerText = game_name + " ×";
+                            selected_game_names.push(game_name);
+                        }
+                        show_games(games);
+                    });
+                    
+                    game_names_container.appendChild(game_name_container);
+                });
+                
+                game_players = [...new Set(games.map(game => game.players).flat())];
+                game_players = game_players.filter(game_player => game_player !== localStorage.getItem("userId")).sort();
+                let game_players_container = document.querySelector("#game-players-container");
+                game_players.forEach(game_player => {
+                    let game_player_container = document.createElement("span");
+                    game_player_container.classList.add("game-player-container");
+                    game_player_container.innerText = game_player;
+                    
+                    game_player_container.addEventListener("click", () => {
+                        if (game_player_container.classList.contains("game-player-container-active")) {
+                            game_player_container.classList.remove("game-player-container-active");
+                            game_player_container.innerText = game_player;
+                            if (selected_game_players.includes(game_player)) {
+                                selected_game_players = selected_game_players.filter(g => g !== game_player);
+                            }
+                        } else {
+                            game_player_container.classList.add("game-player-container-active");
+                            game_player_container.innerText = game_player + " ×";
+                            selected_game_players.push(game_player);
+                        }
+                        show_games(games);
+                    });
+                    
+                    game_players_container.appendChild(game_player_container);
+                });
+            }
+        }
+        
+        function show_games(all_games) {
+            let gameCount = document.querySelector("#game-count");
+            let count = 0;
+            let userId = localStorage.getItem("userId");
+            let gamesContainer = document.querySelector("#games-container");
+            gamesContainer.innerHTML = "";
+            
+            let filtered_games = all_games.filter(game => {
+                let result = true;
+                result = result && game.players.some(player_id => player_id === userId)
+                if (selected_game_names.length !== 0) {
+                    result = result && selected_game_names.some(selected_game_name => selected_game_name === game.name);
+                }
+                if (selected_game_players.length !== 0) {
+                    result = result && selected_game_players.some(selected_game_player => game.players.includes(selected_game_player));
+                }
+                return result;
+            });
+            
+            let sorted_games = filtered_games.sort((a, b) => {
+                if (a.winner === undefined && b.winner !== undefined) {
+                    return -1;
+                } else if (a.winner !== undefined && b.winner === undefined) {
+                    return 1;
+                } else {
+                    return b.timeStamp - a.timeStamp;
+                }
+            });
+            
+            if (sorted_games.length === 0) {
+                gameCount.innerText = "No Game Found.";
+            }
+            
+            for (let value of sorted_games) {
+                count++;
+                gameCount.innerText = "Showing " + count + "/" + sorted_games.length + " Games";
+                
+                let gameContainer = document.createElement("div");
+                gameContainer.classList.add("game-container");
+                gameContainer.id = "game-" + value.id;
+                gamesContainer.appendChild(gameContainer);
+                
+                let gameName = document.createElement("span");
+                gameName.classList.add("game-name");
+                gameName.innerHTML = "Game: " + value.name.replaceAll("-", " ") + " (" + (value.winner === undefined ? "Running..." : "Finished") + ")" + "<br>";
+                gameContainer.appendChild(gameName);
+                
+                let gameTime = document.createElement("span");
+                gameTime.classList.add("game-time");
+                let timeStamp = (new Date() - new Date(value.timeStamp)) / 1000;
+                if (timeStamp < 1) {
+                    timeStamp = "just now";
+                } else if (timeStamp < 60) {
+                    timeStamp = parseInt(timeStamp) + " seconds ago";
+                } else if (timeStamp < 60*60) {
+                    timeStamp = parseInt(timeStamp / 60) + " minutes ago";
+                } else if (timeStamp < 24*60*60) {
+                    timeStamp = parseInt(timeStamp / (60*60)) + " hours ago";
+                } else if (timeStamp < 30*24*60*60) {
+                    timeStamp = parseInt(timeStamp / (24*60*60)) + " days ago";
+                } else if (timeStamp < 365*24*60*60) {
+                    timeStamp = parseInt(timeStamp / (30*24*60*60)) + " months ago";
+                } else {
+                    timeStamp = parseInt(timeStamp / (365*24*60*60)) + " months ago";
+                }
+                gameTime.innerHTML = "Time: " + timeStamp + "<br>";
+                gameContainer.appendChild(gameTime);
+                
+                let gamePlayers = document.createElement("span");
+                gamePlayers.classList.add("game-players");
+                gamePlayers.innerHTML = "Players: " + value.players.map(player => "@" + player).join(", ").split("").reverse().join("").replace(" ,", " dna ").split("").reverse().join("") + "<br>";
+                gameContainer.appendChild(gamePlayers);
+                
+                let gameWinner = document.createElement("span");
+                gameWinner.classList.add("game-winner");
+                gameWinner.innerHTML = "Winner: " + value.winner + "<br>";
+                gameContainer.appendChild(gameWinner);
+                
+                let gamePlayButton = document.createElement("button");
+                gamePlayButton.classList.add("game-play-button");
+                gamePlayButton.innerText = value.winner === undefined ? "Play" : "View";
+                gamePlayButton.addEventListener("click", () => {
+                    localStorage.setItem("gameId-" + value.name, value.id);
+                    window.open("play/" + value.name + ".html", "_self");
+                });
+                gameContainer.appendChild(gamePlayButton);
+                
+                if (!value.winner) {
+                    let gameDeleteButton = document.createElement("button");
+                    gameDeleteButton.classList.add("game-delete-button");
+                    gameDeleteButton.innerText = "Delete";
+                    gameDeleteButton.addEventListener("click", () => {
+                        if (confirm("Are you sure?")) {
+                            removeFirebaseData("data/project/game/games/" + value.name + "/" + value.id).then((success) => {
+                                alert(success);
+                                init();
+                            }).catch((error) => {
+                                alert(error);
+                            });
+                        }
+                    });
+                    gameContainer.appendChild(gameDeleteButton);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
