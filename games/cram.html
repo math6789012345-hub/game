@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cram</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --theme-color: black;
+            --theme-background-color: white;
+            --theme-nav-color: #eee;
+            --theme-nav-active-color: lightgreen;
+        }
+        body {
+            color: var(--theme-color);
+            background-color: var(--theme-background-color);
+        }
+        #nav-bar {
+            position: sticky;
+            top: 0px;
+            border-bottom: 5px solid var(--theme-nav-color);
+            background-color: var(--theme-background-color);
+        }
+        #nav-links {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            color: var(--theme-nav-color);
+        }
+        .nav-link {
+            text-decoration: none;
+            color: inherit;
+            font-size: 2rem;
+            padding: 5px;
+        }
+        .nav-active {
+            color: var(--theme-nav-active-color);
+        }
+        input, select {
+            color: var(--theme-color);
+        }
+    </style>
+</head>
+<body>
+    <div id="nav-bar">
+        <div id="nav-links">
+            <a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
+            <a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
+            <a class="nav-link nav-active" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a class="nav-link" href="../play.html"><i class="fa-solid fa-play"></i></a>
+            <a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
+        </div>
+    </div>
+    <div id="container">
+        <div class="input" id="">
+            <label>Your Color</label>
+            <input type="color" id="p1-color" value="#00ff00">
+        </div>
+        <div class="input" id="">
+            <label>Player 2 Color</label>
+            <input type="color" id="p2-color" value="#ff0000">
+        </div>
+        <div class="input" id="">
+            <label>Row: </label>
+            <input type="number" id="row" value="5">
+        </div>
+        <div class="input" id="">
+            <label>Column:</label>
+            <input type="number" id="column" value="5">
+        </div>
+        <div class="input" id="">
+            <label>Size:</label>
+            <input type="number" id="size" value="2">
+        </div>
+        <div class="input" id="">
+            <label>Player 2</label>
+            <select id="p2">
+                <option></option>
+            </select>
+        </div>        
+        <div class="" id="">
+            <button id="create-button">Create Game</button>
+        </div>
+    </div>
+    <script type="module">
+        // Import Firebase from CDNs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
+            authDomain: "data-7c972.firebaseapp.com",
+            databaseURL: "https://data-7c972-default-rtdb.firebaseio.com",
+            projectId: "data-7c972",
+            storageBucket: "data-7c972.firebasestorage.app",
+            messagingSenderId: "628115358338",
+            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
+            measurementId: "G-RQX36JBB1Z"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- CRUD Functions (From previous step) ---
+
+        async function getFirebaseData(path) {
+            const dbRef = ref(db, path);
+            const snapshot = await get(dbRef);
+            if (snapshot.exists()) {
+                return snapshot.val();
+            } else {
+                return "No data available at this path.";
+            }
+        }
+
+        async function addFirebaseData(path, dataObj, overwrite = false) {
+            const dbRef = ref(db, path);
+            if (!overwrite) {
+                const snapshot = await get(dbRef);
+                if (snapshot.exists()) return "Data already exists! (Overwrite is false)";
+            }
+            await set(dbRef, dataObj);
+            return "Data added successfully!";
+        }
+
+        // --- add data
+        
+        let theme = localStorage.getItem("theme") || "light";
+        if (theme === "light") {
+            document.documentElement.style.setProperty('--theme-color', 'black');
+            document.documentElement.style.setProperty('--theme-background-color', 'white');
+            document.documentElement.style.setProperty('--theme-nav-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'green');
+        } else {
+            document.documentElement.style.setProperty('--theme-color', 'white');
+            document.documentElement.style.setProperty('--theme-background-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-color', '#eee');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'lightgreen');
+        }
+        
+        document.addEventListener("DOMContentLoaded", async () => {
+            let users = await getFirebaseData("data/project/game/users");
+            for (let id of Object.keys(users)) {
+                if (id !== localStorage.getItem("userId")) {
+                    let option = document.createElement("option");
+                    option.innerText = "@" + id;
+                    document.querySelector("#p2").appendChild(option);
+                }
+            }
+        });
+        
+        document.querySelector("#create-button").addEventListener("click", async () => {
+            let row = document.querySelector("#row").value
+            let column = document.querySelector("#column").value
+            let size = document.querySelector("#size").value
+            let p1Color = document.querySelector("#p1-color").value
+            let p2Color = document.querySelector("#p2-color").value
+            let p2Username = document.querySelector("#p2").value;
+            if (p2Username) {
+                let gameId = "id-" + Date.now() + "-" + crypto.randomUUID();
+                let p1 = localStorage.getItem("userId");
+                let p2 = p2Username.slice(1);
+                addFirebaseData("data/project/game/games/cram/" + gameId, {
+                    "players": [
+                        {
+                            "username": p1,
+                            "color": p1Color
+                        },
+                        {
+                            "username": p2,
+                            "color": p2Color
+                        }
+                    ],
+                    "row": Number(row),
+                    "column": Number(column),
+                    "size": Number(size)
+                }).then((success) => {
+                    alert(success);
+                    localStorage.setItem("gameId-cram", gameId);
+                    window.open("../play/cram.html", "_self");
+                }).catch((error) => {
+                    alert(error);
+                });
+            } else {
+                alert("Fill all input field");
+            }
+        });
+        
+        if (localStorage.getItem("userId") === null) {
+            window.open("../login.html", "_self");
+        }
+    </script>
+</body>
+</html>
