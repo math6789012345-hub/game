@@ -7,20 +7,17 @@
     <style>
         :root { --bg: white; --txt: black; --nav-bg: white; --nav-border: black; --board-bg: #ccc; }
         [data-theme="dark"] { --bg: #121212; --txt: white; --nav-bg: #1e1e1e; --nav-border: white; --board-bg: #333; }
-        body { background-color: var(--bg); color: var(--txt); margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: 0.3s; }
+        body { background-color: var(--bg); color: var(--txt); margin: 0; font-family: sans-serif; transition: 0.3s; }
         #nav-bar { position: sticky; top: 0px; background-color: var(--nav-bg); border-bottom: 5px solid var(--nav-border); z-index: 100; }
         #nav-links { width: 100%; display: flex; justify-content: space-around; }
         .nav-link { text-decoration: none; color: inherit; font-size: 2rem; padding: 5px; }
         .nav-active { color: green; }
         #status { text-align: center; margin-top: 20px; font-size: 1.5rem; font-weight: bold; }
         #board { display: grid; gap: 4px; margin: 20px auto; width: max-content; background: var(--board-bg); border: 4px solid var(--board-bg); border-radius: 8px; padding: 4px; }
-        .cell { width: 45px; height: 45px; background: var(--bg); cursor: pointer; border-radius: 4px; transition: transform 0.1s; }
-        .sel { border: 4px solid var(--txt); box-sizing: border-box; transform: scale(0.9); }
-        @keyframes highlight { 
-            0% { filter: brightness(1); box-shadow: 0 0 0px black; } 
-            100% { filter: brightness(1.8); box-shadow: 0 0 15px 5px black; } 
-        }
-        .opp-last { animation: highlight 1s infinite alternate; z-index: 2; position: relative; }
+        .cell { width: 45px; height: 45px; background: var(--bg); cursor: pointer; border-radius: 4px; transition: transform 0.1s; box-sizing: border-box; }
+        .sel { border: 4px solid var(--txt); transform: scale(0.9); }
+        @keyframes highlight { 0% { filter: brightness(1); box-shadow: 0 0 0px black; } 100% { filter: brightness(1.8); box-shadow: 0 0 15px 5px black; } }
+        .opp-last { animation: highlight 1s infinite alternate; z-index: 2; position: relative; border: 3px solid black; }
     </style>
 </head>
 <body>
@@ -44,7 +41,7 @@
         document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "light");
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, onValue, update, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
         const app = initializeApp({
             apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
@@ -70,8 +67,7 @@
             }
             const me = gData.players.find(p => p.username === uid);
             myColor = me ? me.color : "";
-            const turnIdx = gData.turn || 0;
-            const currP = gData.players[turnIdx];
+            const currP = gData.players[gData.turn || 0];
             const stat = document.getElementById("status");
 
             if (gData.winner) {
@@ -98,33 +94,51 @@
             });
         }
 
+        function isValidShape(arr) {
+            if (arr.length !== gData.size) return false;
+            let vis = new Set([arr[0]]), q = [arr[0]];
+            while (q.length) {
+                let c = q.pop(), r = Math.floor(c / gData.column), cl = c % gData.column;
+                [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(([dr, dc]) => {
+                    let nr = r + dr, nc = cl + dc, ni = nr * gData.column + nc;
+                    if (nr >= 0 && nr < gData.row && nc >= 0 && nc < gData.column && arr.includes(ni) && !vis.has(ni)) {
+                        vis.add(ni);
+                        q.push(ni);
+                    }
+                });
+            }
+            return vis.size === gData.size;
+        }
+
         function clk(i) {
             if (gData.winner || gData.players[gData.turn || 0].username !== uid || gData.board[i]) return;
             if (sel.includes(i)) { sel = sel.filter(x => x !== i); render(); return; }
             if (sel.length > 0) {
-                let r = Math.floor(i/gData.column), c = i%gData.column;
-                if (!sel.some(s => Math.abs(r - Math.floor(s/gData.column)) + Math.abs(c - s%gData.column) === 1)) return;
+                let r = Math.floor(i / gData.column), c = i % gData.column;
+                if (!sel.some(s => Math.abs(r - Math.floor(s / gData.column)) + Math.abs(c - s % gData.column) === 1)) return;
             }
             sel.push(i);
             if (sel.length === gData.size) {
+                if (!isValidShape(sel)) { sel = []; render(); return; }
                 let nb = [...gData.board];
                 sel.forEach(idx => nb[idx] = myColor);
-                let nextTurn = 1 - (gData.turn || 0);
-                let up = { board: nb, turn: nextTurn, lastMove: sel };
+                let up = { board: nb, turn: 1 - (gData.turn || 0), lastMove: sel };
                 if (!canMove(nb)) up.winner = uid;
                 update(gRef, up);
                 sel = [];
-            } else render();
+            } else {
+                render();
+            }
         }
 
         function canMove(b) {
             const R = gData.row, C = gData.column, S = gData.size;
             const findPaths = (idx, current) => {
                 if (current.size === S) return true;
-                let r = Math.floor(idx/C), c = idx%C;
-                for (let [dr, dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
-                    let nr = r+dr, nc = c+dc, ni = nr*C+nc;
-                    if (nr>=0 && nr<R && nc>=0 && nc<C && !b[ni] && !current.has(ni)) {
+                let r = Math.floor(idx / C), c = idx % C;
+                for (let [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+                    let nr = r + dr, nc = c + dc, ni = nr * C + nc;
+                    if (nr >= 0 && nr < R && nc >= 0 && nc < C && !b[ni] && !current.has(ni)) {
                         current.add(ni);
                         if (findPaths(ni, current)) return true;
                         current.delete(ni);
@@ -132,7 +146,7 @@
                 }
                 return false;
             };
-            for (let i=0; i<b.length; i++) if (!b[i] && findPaths(i, new Set([i]))) return true;
+            for (let i = 0; i < b.length; i++) if (!b[i] && findPaths(i, new Set([i]))) return true;
             return false;
         }
     </script>
