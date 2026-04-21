@@ -6,16 +6,17 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 body{margin:0;font-family:sans-serif;transition:0.3s}
-body.light{background:#fff;color:#000;--nbg:#fff;--nbd:#000;--cbg:#eee}
-body.dark{background:#121212;color:#fff;--nbg:#1e1e1e;--nbd:#333;--cbg:#333}
+body.light{background:#fff;color:#000;--nbg:#fff;--nbd:#000;--cbg:#eee;--lb:#000}
+body.dark{background:#121212;color:#fff;--nbg:#1e1e1e;--nbd:#333;--cbg:#333;--lb:#fff}
 #nav-bar{position:sticky;top:0px;background-color:var(--nbg);border-bottom:5px solid var(--nbd);z-index:10}
 #nav-links{width:100%;display:flex;justify-content:space-around}
 .nav-link{text-decoration:none;color:inherit;font-size:2rem;padding:5px}
 .nav-active{color:green}
 #st{text-align:center;font-size:1.5rem;font-weight:bold;margin:20px;min-height:2rem}
 #bd{display:grid;gap:8px;margin:20px auto;padding:15px;background:#005bb5;width:max-content;border-radius:12px;box-shadow:0 10px 20px rgba(0,0,0,0.3)}
-.cl{width:45px;height:45px;background:var(--cbg);border-radius:50%;display:flex;justify-content:center;align-items:center;cursor:pointer;box-shadow:inset 0 2px 5px rgba(0,0,0,0.2)}
-.pc{width:40px;height:40px;border-radius:50%;transition:0.3s;box-shadow:0 2px 4px rgba(0,0,0,0.4)}
+.cl{width:45px;height:45px;background:var(--cbg);border-radius:50%;display:flex;justify-content:center;align-items:center;cursor:pointer;box-shadow:inset 0 2px 5px rgba(0,0,0,0.2);box-sizing:border-box}
+.pc{width:40px;height:40px;border-radius:50%;transition:0.3s;box-shadow:0 2px 4px rgba(0,0,0,0.4);box-sizing:border-box}
+.last-move{border:4px solid var(--lb);filter:brightness(1.5) saturate(1.2)}
 </style>
 </head>
 <body>
@@ -53,7 +54,7 @@ for(let r=0;r<R;r++)for(let c=0;c<C;c++){
 let cl=document.createElement("div");cl.className="cl";cl.onclick=()=>play(c,M);
 if(B[r][c]){
 let p=document.createElement("div");p.className="pc";p.style.backgroundColor=P.find(x=>x.username===B[r][c]).color;
-if(L&&L.r===r&&L.c===c&&B[r][c]!==u)p.style.filter="brightness(1.8) saturate(1.5)";
+if(L&&L.r===r&&L.c===c){p.classList.add("last-move");if(B[r][c]!==u)p.style.opacity="0.6"}
 cl.appendChild(p);
 }bd.appendChild(cl);
 }
