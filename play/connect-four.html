@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body{margin:0;font-family:sans-serif}
+body.light{background:#fff;color:#000;--nbg:#fff;--nbd:#000;--cbg:#fff}
+body.dark{background:#121212;color:#fff;--nbg:#1e1e1e;--nbd:#333;--cbg:#333}
+#nav-bar{position:sticky;top:0px;background-color:var(--nbg);border-bottom:5px solid var(--nbd)}
+#nav-links{width:100%;display:flex;justify-content:space-around}
+.nav-link{text-decoration:none;color:inherit;font-size:2rem;padding:5px}
+.nav-active{color:green}
+#st{text-align:center;font-size:1.5rem;font-weight:bold;margin:20px}
+#bd{display:grid;gap:5px;margin:auto;padding:10px;background:#005bb5;width:max-content;border-radius:10px}
+.cl{width:40px;height:40px;background:var(--cbg);border-radius:50%;display:flex;justify-content:center;align-items:center;cursor:pointer}
+.pc{width:36px;height:36px;border-radius:50%;transition:0.3s}
+</style>
+</head>
+<body>
+<div id="nav-bar">
+<div id="nav-links">
+<a class="nav-link" href="../index.html"><i class="fa-solid fa-home"></i></a>
+<a class="nav-link" href="../profile.html"><i class="fa-solid fa-user"></i></a>
+<a class="nav-link" href="../games.html"><i class="fa-solid fa-gamepad"></i></a>
+<a class="nav-link nav-active" href="../play.html"><i class="fa-solid fa-play"></i></a>
+<a class="nav-link" href="../settings.html"><i class="fa-solid fa-gear"></i></a>
+</div>
+</div>
+<div id="st"></div>
+<div id="bd"></div>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import{getDatabase,ref,onValue,update}from"https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+const u=localStorage.getItem("userId");if(!u)window.open("../login.html","_self");
+const g=localStorage.getItem("gameId-connect-four");if(!g)window.open("../play.html","_self");
+document.body.className=localStorage.getItem("theme")||"light";
+const db=getDatabase(initializeApp({apiKey:"AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",authDomain:"data-7c972.firebaseapp.com",databaseURL:"https://data-7c972-default-rtdb.firebaseio.com",projectId:"data-7c972",storageBucket:"data-7c972.firebasestorage.app",messagingSenderId:"628115358338",appId:"1:628115358338:web:8cdc80635cbfbcc2bfaa9b",measurementId:"G-RQX36JBB1Z"}));
+const rF=ref(db,`data/project/game/games/connect-four/${g}`);
+let R,C,P,B,W,L;
+onValue(rF,s=>{
+let d=s.val();if(!d)return;
+R=d.row*1;C=d.column*1;P=d.players;B=d.board;W=d.winner;L=d.lastMove;
+if(!B){update(rF,{board:Array(R).fill(0).map(()=>Array(C).fill(""))});return}
+let n=0;B.forEach(r=>r.forEach(c=>{if(c)n++}));
+let T=P[n%2],M=T.username===u;
+document.getElementById("st").innerHTML=`<span style="color:${W?P.find(p=>p.username===W).color:T.color}">${W?(W===u?"You won!":W+" won!"):(M?"Your turn":T.username+"'s turn")}</span>`;
+let bd=document.getElementById("bd");bd.style.gridTemplateColumns=`repeat(${C},40px)`;bd.innerHTML="";
+for(let r=0;r<R;r++)for(let c=0;c<C;c++){
+let cl=document.createElement("div");cl.className="cl";cl.onclick=()=>play(c,M);
+if(B[r][c]){
+let p=document.createElement("div");p.className="pc";p.style.backgroundColor=P.find(x=>x.username===B[r][c]).color;
+if(L&&L.r===r&&L.c===c&&B[r][c]!==u)p.style.opacity="0.4";
+cl.appendChild(p);
+}bd.appendChild(cl);
+}
+});
+function play(c,M){
+if(!M||W)return;let r=-1;
+for(let i=R-1;i>=0;i--)if(!B[i][c]){r=i;break}
+if(r===-1)return;B[r][c]=u;
+let w=chk(r,c)?u:null;
+update(rF,{board:B,lastMove:{r,c},...(w&&{winner:w})});
+}
+function chk(r,c){
+for(let[x,y]of[[0,1],[1,0],[1,1],[1,-1]]){
+let t=1;
+for(let d of[1,-1]){
+let nr=r+x*d,nc=c+y*d;
+while(nr>=0&&nr<R&&nc>=0&&nc<C&&B[nr][nc]===u){t++;nr+=x*d;nc+=y*d}
+}if(t>=4)return true
+}return false
+}
+</script>
+</body>
+</html>
