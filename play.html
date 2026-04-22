@@ -69,6 +69,12 @@
             padding: 10px;
             margin: 10px;
         }
+        .game-name {
+            float: left;
+        }
+        .game-time {
+            float: right;
+        }
     </style>
 </head>
 <body>
@@ -288,7 +294,7 @@
                 
                 let gameName = document.createElement("span");
                 gameName.classList.add("game-name");
-                gameName.innerHTML = "Game: " + value.name.replaceAll("-", " ") + " (" + (value.winner === undefined ? "Running..." : "Finished") + ")" + "<br>";
+                gameName.innerHTML = value.name.replaceAll("-", " ") + " (" + (value.winner === undefined ? "Running..." : "Finished") + ")";
                 gameContainer.appendChild(gameName);
                 
                 let gameTime = document.createElement("span");
@@ -297,30 +303,37 @@
                 if (timeStamp < 1) {
                     timeStamp = "just now";
                 } else if (timeStamp < 60) {
-                    timeStamp = parseInt(timeStamp) + " seconds ago";
+                    timeStamp = parseInt(timeStamp) + "s";
                 } else if (timeStamp < 60*60) {
-                    timeStamp = parseInt(timeStamp / 60) + " minutes ago";
+                    timeStamp = parseInt(timeStamp / 60) + "m";
                 } else if (timeStamp < 24*60*60) {
-                    timeStamp = parseInt(timeStamp / (60*60)) + " hours ago";
+                    timeStamp = parseInt(timeStamp / (60*60)) + "h";
                 } else if (timeStamp < 30*24*60*60) {
-                    timeStamp = parseInt(timeStamp / (24*60*60)) + " days ago";
+                    timeStamp = parseInt(timeStamp / (24*60*60)) + "d";
                 } else if (timeStamp < 365*24*60*60) {
-                    timeStamp = parseInt(timeStamp / (30*24*60*60)) + " months ago";
+                    timeStamp = parseInt(timeStamp / (7*24*60*60)) + "w";
                 } else {
-                    timeStamp = parseInt(timeStamp / (365*24*60*60)) + " months ago";
+                    timeStamp = parseInt(timeStamp / (365*24*60*60)) + "y";
                 }
-                gameTime.innerHTML = "Time: " + timeStamp + "<br>";
+                gameTime.innerHTML = "• " + timeStamp;
                 gameContainer.appendChild(gameTime);
+                
+                let divClear = document.createElement("div");
+                divClear.style.clear = "both";
+                gameContainer.appendChild(divClear);
                 
                 let gamePlayers = document.createElement("span");
                 gamePlayers.classList.add("game-players");
-                gamePlayers.innerHTML = "Players: " + value.players.map(player => "@" + player).join(", ").split("").reverse().join("").replace(" ,", " dna ").split("").reverse().join("") + "<br>";
+                gamePlayers.innerHTML = "<ul>" + value.players.map(player => {
+                    if (value.winner === player) {
+                        return `<li style="list-style-type: '🥇';">${player} (winner)</li>`;
+                    } else if (value.winner  === "draw") {
+                        return `<li style="list-style-type: '🏅';">${player} (draw)</li>`;
+                    } else {
+                        return `<li style="list-style-type: '👤';">${player}</li>`;
+                    }
+                }).join("") + "</ul>";
                 gameContainer.appendChild(gamePlayers);
-                
-                let gameWinner = document.createElement("span");
-                gameWinner.classList.add("game-winner");
-                gameWinner.innerHTML = "Winner: " + value.winner + "<br>";
-                gameContainer.appendChild(gameWinner);
                 
                 let gamePlayButton = document.createElement("button");
                 gamePlayButton.classList.add("game-play-button");
