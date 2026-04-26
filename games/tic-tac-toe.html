@@ -141,7 +141,7 @@
             for (let id of Object.keys(users)) {
                 if (id !== localStorage.getItem("userId")) {
                     let option = document.createElement("option");
-                    option.innerText = "@" + id;
+                    option.innerText = (id === "computer" || id === "ai") ? "🤖" + id : "@" + id;
                     document.querySelector("#p2").appendChild(option);
                 }
             }
@@ -151,7 +151,7 @@
             let p1Symbol = document.querySelector("#p1-symbol").value;
             let p1Color = document.querySelector("#p1-color").value;
             let p2Color = document.querySelector("#p2-color").value;
-            let p2Username = document.querySelector("#p2").value;
+            let p2Username = document.querySelector("#p2").value.replace("🤖", "@");
             if (p2Username) {
                 let gameId = "id-" + Date.now() + "-" + crypto.randomUUID();
                 let p1 = localStorage.getItem("userId");
