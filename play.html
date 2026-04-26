@@ -327,8 +327,10 @@
                 gamePlayers.innerHTML = "<ul>" + value.players.map(player => {
                     if (value.winner === player) {
                         return `<li style="list-style-type: '🥇';">${player} (winner)</li>`;
-                    } else if (value.winner  === "draw") {
+                    } else if (value.winner === "draw") {
                         return `<li style="list-style-type: '🏅';">${player} (draw)</li>`;
+                    } else if (player === "computer") {
+                        return `<li style="list-style-type: '🤖';">${player}</li>`;
                     } else {
                         return `<li style="list-style-type: '👤';">${player}</li>`;
                     }
