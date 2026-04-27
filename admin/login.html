@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        #nav-bar {
+            position: sticky;
+            top: 0px;
+            background-color: white;
+            border-bottom: 5px solid black;
+        }
+        #nav-links {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+        }
+        .nav-link {
+            text-decoration: none;
+            color: inherit;
+            font-size: 2rem;
+            padding: 5px;
+        }
+        .nav-active {
+            color: green;
+        }        
+    </style>
+</head>
+<body>
+    <div id="nav-bar">
+        <div id="nav-links">
+            <a class="nav-link" href="index.html"><i class="fa-solid fa-home"></i></a>
+            <a class="nav-link nav-active" href="profile.html"><i class="fa-solid fa-user"></i></a>
+            <a class="nav-link" href="users.html"><i class="fa-solid fa-users"></i></a>
+            <a class="nav-link" href="games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a class="nav-link" href="settings.html"><i class="fa-solid fa-gear"></i></a>
+        </div>
+    </div>
+    <div id="login-container">
+        <div class="input-container" id="">
+            <label>Password:</label>
+            <br>
+            <input id="password" type="password">
+        </div>
+        
+        <div class="button-container" id="">
+            <button id="login-button">Login</button>
+        </div>
+    </div>
+    <script type="module">
+        // 1. Import Firebase from CDNs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
+            authDomain: "data-7c972.firebaseapp.com",
+            databaseURL: "https://data-7c972-default-rtdb.firebaseio.com",
+            projectId: "data-7c972",
+            storageBucket: "data-7c972.firebasestorage.app",
+            messagingSenderId: "628115358338",
+            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
+            measurementId: "G-RQX36JBB1Z"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- CRUD Functions
+
+        async function getFirebaseData(path) {
+            const dbRef = ref(db, path);
+            const snapshot = await get(dbRef);
+            if (snapshot.exists()) {
+                return snapshot.val();
+            } else {
+                return "No data available at this path.";
+            }
+        }
+
+        // --- Login
+        
+        let loginButton = document.querySelector("#login-button");
+        loginButton.addEventListener("click", async () => {
+            let password = document.querySelector("#password").value;
+            if (password) {
+                let admin_password = await getFirebaseData("data/project/game/admin");
+                if (password === admin_password) {
+                    localStorage.setItem("admin", "true")
+                    alert("Login Successful");
+                    window.open("profile.html", "_self");
+                } else {
+                    alert("Invalid username or password");
+                }
+            } else {
+                alert("Fill input field");
+            }
+        });
+        
+        if (localStorage.getItem("admin") === "true") {
+            window.open("profile.html", "_self");
+        }
+    </script>
+</body>
+</html>
