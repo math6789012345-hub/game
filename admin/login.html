@@ -88,13 +88,13 @@
         loginButton.addEventListener("click", async () => {
             let password = document.querySelector("#password").value;
             if (password) {
-                let admin_password = await getFirebaseData("data/project/game/admin");
+                let admin_password = await getFirebaseData("data/project/game/admin/password");
                 if (password === admin_password) {
                     localStorage.setItem("admin", "true")
                     alert("Login Successful");
                     window.open("profile.html", "_self");
                 } else {
-                    alert("Invalid username or password");
+                    alert("Invalid username");
                 }
             } else {
                 alert("Fill input field");
