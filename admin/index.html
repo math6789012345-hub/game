@@ -37,13 +37,16 @@
         .nav-active {
             color: var(--theme-nav-active-color);
         }
+        input {
+            color: var(--theme-color);
+        }
         #buttons-container {
             display: flex;
             align-items: center;
             justify-content: center;
             flex-direction: column;
         }
-        button {
+        #buttons-container button {
             font-size: 2rem;
             margin-top: 20px;
         }
@@ -153,7 +156,7 @@
             item.addEventListener("click", () => {
                 if (item.id.split("-")[0] === "logout") {
                     localStorage.setItem("admin", "false");
-                } else {
+                } else if (item.id.split("-")[0] === "login") {
                     window.open(item.id.split("-")[0] + ".html", "_self");
                 }
             });
@@ -176,12 +179,13 @@
         
         let addVersionButton = document.querySelector("#add-version-button");
         addVersionButton.addEventListener("click", async () => {
-            let newVersion = document.querySelector("#username").value.toLowerCase();
+            let newVersion = document.querySelector("#add-version").value.split("").join(".");
             if (newVersion) {
                 addFirebaseData("data/project/game", {
-                    "version": newVersion.split("").join(".")
+                    "version": newVersion
                 }, true).then((success) => {
                      alert(success);
+                     window.open("index.html", "_self");
                 }).catch((error) => {
                      alert(error);
                 });
@@ -192,14 +196,13 @@
         
         let addNewsButton = document.querySelector("#add-news-button");
         addNewsButton.addEventListener("click", async () => {
-            let newNews = document.querySelector("#username").value.toLowerCase();
+            let newNews = document.querySelector("#add-news").value;
             if (newNews) {
-                let all_news = await addFirebaseData("data/project/game/news") || [];
-                all_news.push(document.querySelector("#add-news").value);
-                addFirebaseData("data/project/game", {
-                    "news": all_news
-                }, true).then((success) => {
+                let all_news = await getFirebaseData("data/project/game/news");
+                all_news.push(newNews);
+                addFirebaseData("data/project/game/news", all_news, true).then((success) => {
                      alert(success);
+                     window.open("index.html", "_self");
                 }).catch((error) => {
                      alert(error);
                 });
