@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --theme-color: black;
+            --theme-background-color: white;
+            --theme-nav-color: #eee;
+            --theme-nav-active-color: lightgreen;
+        }
+        body {
+            color: var(--theme-color);
+            background-color: var(--theme-background-color);
+        }
+        #nav-bar {
+            position: sticky;
+            top: 0px;
+            border-bottom: 5px solid var(--theme-nav-color);
+            background-color: var(--theme-background-color);
+        }
+        #nav-links {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            color: var(--theme-nav-color);
+        }
+        .nav-link {
+            text-decoration: none;
+            color: inherit;
+            font-size: 2rem;
+            padding: 5px;
+        }
+        .nav-active {
+            color: var(--theme-nav-active-color);
+        }
+        #buttons-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        button {
+            font-size: 2rem;
+            margin-top: 20px;
+        }
+        #version {
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="nav-bar">
+        <div id="nav-links">
+            <a class="nav-link nav-active" href="index.html"><i class="fa-solid fa-home"></i></a>
+            <a class="nav-link" href="profile.html"><i class="fa-solid fa-user"></i></a>
+            <a class="nav-link" href="users.html"><i class="fa-solid fa-users"></i></a>
+            <a class="nav-link" href="games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a class="nav-link" href="settings.html"><i class="fa-solid fa-gear"></i></a>
+        </div>
+    </div>
+    <div id="buttons-container">
+        <a href="../index.html">Game</a>
+        <button id="login-button">Login</button>
+        <button id="logout-button">Logout</button>
+    </div>
+    <br>
+    <div id="version">
+        <i class="fa-solid fa-tags"></i>Version: ?.?.?
+    </div>
+    <label>Add Version:</label>
+    <input type="text" id="add-version">
+    <button id="add-version-button">Add</button>
+    <br>
+    <div id="news">
+        <span>What's new:</span>
+        <ul id="news-list"></ul>
+        <label>Add News:</label>
+        <input type="text" id="add-news">
+        <button id="add-news-button">Add</button>
+    </div>
+    <script type="module">
+        // Import Firebase from CDNs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk",
+            authDomain: "data-7c972.firebaseapp.com",
+            databaseURL: "https://data-7c972-default-rtdb.firebaseio.com",
+            projectId: "data-7c972",
+            storageBucket: "data-7c972.firebasestorage.app",
+            messagingSenderId: "628115358338",
+            appId: "1:628115358338:web:8cdc80635cbfbcc2bfaa9b",
+            measurementId: "G-RQX36JBB1Z"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- CRUD Functions (From previous step) ---
+
+        async function getFirebaseData(path) {
+            const dbRef = ref(db, path);
+            const snapshot = await get(dbRef);
+            if (snapshot.exists()) {
+                return snapshot.val();
+            } else {
+                return "No data available at this path.";
+            }
+        }
+
+        async function addFirebaseData(path, dataObj, overwrite = false) {
+            const dbRef = ref(db, path);
+            if (!overwrite) {
+                const snapshot = await get(dbRef);
+                if (snapshot.exists()) return "Data already exists! (Overwrite is false)";
+            }
+            await set(dbRef, dataObj);
+            return "Data added successfully!";
+        }
+
+        async function removeFirebaseData(path) {
+            const dbRef = ref(db, path);
+            await remove(dbRef);
+            return "Data removed successfully!";
+        }
+        
+        // --- data
+        
+        let theme = localStorage.getItem("theme") || "light";
+        if (theme === "light") {
+            document.documentElement.style.setProperty('--theme-color', 'black');
+            document.documentElement.style.setProperty('--theme-background-color', 'white');
+            document.documentElement.style.setProperty('--theme-nav-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'green');
+        } else {
+            document.documentElement.style.setProperty('--theme-color', 'white');
+            document.documentElement.style.setProperty('--theme-background-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-color', '#eee');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'lightgreen');
+        }
+        
+        let loginButton = document.querySelector("#login-button");
+        let logoutButton = document.querySelector("#logout-button");
+        
+        document.querySelectorAll("button").forEach((item) => {
+            item.addEventListener("click", () => {
+                if (item.id.split("-")[0] === "logout") {
+                    localStorage.setItem("admin", "false");
+                } else {
+                    window.open(item.id.split("-")[0] + ".html", "_self");
+                }
+            });
+        });
+        
+        if (localStorage.getItem("admin") !== "true") {
+            logoutButton.style.display = "none";
+        } else {
+            loginButton.style.display = "none";
+        }
+        
+        document.addEventListener("DOMContentLoaded", async () => {
+            let version = await getFirebaseData("data/project/game/version");
+            document.querySelector("#version").innerHTML = '<i class="fa-solid fa-tags"></i>Version: ' + version;
+            let news = await getFirebaseData("data/project/game/news");
+            for(let i=news.length-1; i>=0; i--){
+                document.querySelector("#news-list").innerHTML += `<li>${news[i]}</li>`;
+            }
+        });
+        
+        let addVersionButton = document.querySelector("#add-version-button");
+        addVersionButton.addEventListener("click", async () => {
+            let newVersion = document.querySelector("#username").value.toLowerCase();
+            if (newVersion) {
+                addFirebaseData("data/project/game", {
+                    "version": newVersion.split("").join(".")
+                }, true).then((success) => {
+                     alert(success);
+                }).catch((error) => {
+                     alert(error);
+                });
+            } else {
+                alert("Version Not Available");
+            }
+        });
+        
+        let addNewsButton = document.querySelector("#add-news-button");
+        addNewsButton.addEventListener("click", async () => {
+            let newNews = document.querySelector("#username").value.toLowerCase();
+            if (newNews) {
+                let all_news = await addFirebaseData("data/project/game/news") || [];
+                all_news.push(document.querySelector("#add-news").value);
+                addFirebaseData("data/project/game", {
+                    "news": all_news
+                }, true).then((success) => {
+                     alert(success);
+                }).catch((error) => {
+                     alert(error);
+                });
+            } else {
+                alert("News Not Available");
+            }
+        });
+    </script>
+</body>
+</html>
