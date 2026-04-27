@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic Tac Toe AI</title>
+    <title>Tic Tac Toe Live</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         const userId = localStorage.getItem("userId"), gameId = localStorage.getItem("gameId-tic-tac-toe");
@@ -15,13 +15,13 @@
         :root { --bg: #fff; --text: #000; --nav-bg: #fff; --nav-border: #000; --board-bg: #222; --cell-bg: #f5f5f5; }
         [data-theme="dark"] { --bg: #121212; --text: #fff; --nav-bg: #1e1e1e; --nav-border: #444; --board-bg: #555; --cell-bg: #2a2a2a; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; }
-        #nav-bar { position: sticky; top: 0; background: var(--nav-bg); border-bottom: 5px solid var(--nav-border); display: flex; justify-content: space-around; }
+        #nav-bar { position: sticky; top: 0; background: var(--nav-bg); border-bottom: 5px solid var(--nav-border); display: flex; justify-content: space-around; z-index: 1000; }
         .nav-link { text-decoration: none; color: inherit; font-size: 2rem; padding: 5px; }
         .nav-active { color: green; }
         #game { display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        #status { padding: 15px; margin-bottom: 20px; font-size: 1.5rem; font-weight: bold; }
+        #status { padding: 15px; margin-bottom: 20px; font-size: 1.5rem; font-weight: bold; text-align: center; }
         #board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 300px; background: var(--board-bg); padding: 5px; border-radius: 10px; }
-        .cell { aspect-ratio: 1; background: var(--cell-bg); display: flex; justify-content: center; align-items: center; font-size: 3rem; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        .cell { aspect-ratio: 1; background: var(--cell-bg); display: flex; justify-content: center; align-items: center; font-size: 3rem; font-weight: bold; cursor: pointer; border-radius: 5px; user-select: none; }
     </style>
 </head>
 <body>
@@ -36,71 +36,98 @@
         <div id="status">Connecting...</div>
         <div id="board"></div>
     </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        
         const conf = { apiKey: "AIzaSyDM7uDhwB3zWU5Ni0p2WkfdvsXa_fJExPk", databaseURL: "https://data-7c972-default-rtdb.firebaseio.com" };
         const db = getDatabase(initializeApp(conf)), gRef = ref(db, `data/project/game/games/tic-tac-toe/${gameId}`);
         const st = document.getElementById('status'), bd = document.getElementById('board');
-        let ps = [], b = [], w = null, me = null, lock = false;
-        for(let i=0; i<9; i++) bd.innerHTML += `<div class="cell" data-i="${i}"></div>`;
-        const chk = (x, s) => [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]].some(p => p.every(j => x[j] === s));
+        let ps = [], b = [], w = null, me = null;
         
-        const minimax = (bd, sym, op, isM) => {
-            if(chk(bd, sym)) return 10; if(chk(bd, op)) return -10;
-            let em = bd.map((v, i) => v === "" ? i : -1).filter(i => i !== -1);
-            if(!em.length) return 0;
-            let best = isM ? -100 : 100;
-            for(let i of em) { bd[i] = isM ? sym : op; let s = minimax(bd, sym, op, !isM); bd[i] = ""; best = isM ? Math.max(best, s) : Math.min(best, s); }
-            return best;
+        for(let i=0; i<9; i++) bd.innerHTML += `<div class="cell" data-i="${i}"></div>`;
+        
+        const chk = (x, sym) => [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]].some(p => p.every(j => x[j] === sym));
+        
+        const makeMove = (i, sym, user) => {
+            if(i !== -1 && i !== null && !isNaN(i) && b[i] === "") {
+                const nb = [...b]; nb[i] = sym;
+                const up = { board: nb };
+                if(chk(nb, sym)) up.winner = user; else if(!nb.includes("")) up.winner = "draw";
+                update(gRef, up);
+            }
         };
 
-        const getBest = (bd, sym, op) => {
-            let bst = -100, m = -1, em = bd.map((v, i) => v === "" ? i : -1).filter(i => i !== -1);
-            for(let i of em) { bd[i] = sym; let s = minimax(bd, sym, op, false); bd[i] = ""; if(s > bst) { bst = s; m = i; } }
+        const getComputerMove = (bd, c, h) => {
+            const sc = (b, isMax) => {
+                if(chk(b, c)) return 10; if(chk(b, h)) return -10;
+                let em = b.map((v, i) => v === "" ? i : -1).filter(i => i !== -1);
+                if(!em.length) return 0;
+                let bst = isMax ? -99 : 99;
+                for(let i of em) { b[i] = isMax ? c : h; let s = sc(b, !isMax); b[i] = ""; bst = isMax ? Math.max(bst, s) : Math.min(bst, s); }
+                return bst;
+            };
+            let bst = -99, m = -1, em = bd.map((v, i) => v === "" ? i : -1).filter(i => i !== -1);
+            for(let i of em) { bd[i] = c; let s = sc(bd, false); bd[i] = ""; if(s > bst) { bst = s; m = i; } }
             return m;
         };
 
-        const getAiMove = async (bd, sym) => {
+        const getAiMove = async (bd, c, h) => {
             try {
-                const prompt = `Tic Tac Toe: Board ${JSON.stringify(bd)}. Your symbol: ${sym}. Output only the index (0-8) of the best move to win.`;
-                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyD7j1BVGSXqunMX_y8b50SR2wd_MpcCKWs`, {
-                    method: "POST", body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                const res = await fetch('/api/gemini', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ board: bd, ai: c, human: h })
                 });
-                const j = await r.json();
-                return parseInt(j.candidates[0].content.parts[0].text.trim());
-            } catch { return getBest(bd, sym, ps.find(p => p.symbol !== sym).symbol); }
+                const data = await res.json();
+                return parseInt(data.index);
+            } catch (e) {
+                console.error("AI fetch failed. Falling back to Minimax.", e);
+                return getComputerMove(bd, c, h);
+            }
         };
 
-        onValue(gRef, async s => {
+        onValue(gRef, s => {
             const d = s.val(); if(!d) return;
-            if(!d.board) update(gRef, {board: Array(9).fill("")});
+            if(!d.board) { update(gRef, {board: Array(9).fill("")}); return; }
             ps = d.players || []; b = d.board || Array(9).fill(""); w = d.winner || null; me = ps.find(p => p.username === userId);
-            document.querySelectorAll('.cell').forEach((c, i) => { c.innerText = b[i]; const p = ps.find(x => x.symbol === b[i]); if(p) c.style.color = p.color; });
-            if(w) { st.innerHTML = w === "draw" ? "draw" : `Winner: <span style="color:${ps.find(p=>p.username===w)?.color}">${w}</span>`; return; }
-            const turn = ps[b.filter(x=>x!=="").length % 2];
-            st.innerHTML = turn?.username === userId ? "Your Turn" : `Waiting for <span style="color:${turn?.color}">${turn?.username}</span>`;
-            if((turn?.username === "computer" || turn?.username === "ai") && !lock && me?.username !== turn.username) {
-                lock = true;
-                const opSym = ps.find(p => p.username !== turn.username).symbol;
-                const i = turn.username === "ai" ? await getAiMove([...b], turn.symbol) : getBest([...b], turn.symbol, opSym);
-                if(i !== -1 && b[i] === "") {
-                    const nb = [...b]; nb[i] = turn.symbol;
-                    const up = { board: nb };
-                    if(chk(nb, turn.symbol)) up.winner = turn.username; else if(!nb.includes("")) up.winner = "draw";
-                    update(gRef, up);
+            
+            document.querySelectorAll('.cell').forEach((c, i) => {
+                c.innerText = b[i];
+                const p = ps.find(x => x.symbol === b[i]);
+                if(p) c.style.color = p.color; else c.style.color = "inherit";
+            });
+
+            if(w) {
+                st.innerHTML = w === "draw" ? "Game Over - Draw!" : `Winner: <span style="color:${ps.find(p=>p.username===w)?.color}">${w}</span>`;
+            } else {
+                const moveCount = b.filter(x=>x!=="").length;
+                const turn = ps[moveCount % 2];
+                st.innerHTML = turn?.username === userId ? "Your Turn" : `Waiting for <span style="color:${turn?.color}">${turn?.username}</span>`;
+                
+                if (turn?.username === "computer" && me) {
+                    if (window.lastMove !== moveCount) {
+                        window.lastMove = moveCount;
+                        setTimeout(() => {
+                            const h = ps.find(p => p.username !== "computer").symbol;
+                            makeMove(getComputerMove([...b], turn.symbol, h), turn.symbol, "computer");
+                        }, 500);
+                    }
+                } else if (turn?.username === "ai" && me) {
+                    if (window.lastMove !== moveCount) {
+                        window.lastMove = moveCount;
+                        st.innerHTML = `AI <span style="color:${turn.color}">ai</span> is thinking...`;
+                        const h = ps.find(p => p.username !== "ai").symbol;
+                        getAiMove([...b], turn.symbol, h).then(i => makeMove(i, turn.symbol, "ai"));
+                    }
                 }
-                lock = false;
             }
         });
 
         bd.addEventListener('click', e => {
             const i = e.target.dataset.i, turn = ps[b.filter(x=>x!=="").length % 2];
-            if(w || b[i] || turn?.username !== userId || lock) return;
-            const nb = [...b]; nb[i] = me.symbol;
-            const up = { board: nb };
-            if(chk(nb, me.symbol)) up.winner = userId; else if(!nb.includes("")) up.winner = "draw";
-            update(gRef, up);
+            if(w || b[i] || turn?.username !== userId) return;
+            makeMove(i, me.symbol, userId);
         });
     </script>
 </body>
