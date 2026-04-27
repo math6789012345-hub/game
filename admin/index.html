@@ -207,6 +207,10 @@
                 alert("News Not Available");
             }
         });
+        
+        if (localStorage.getItem("admin") !== "true") {
+            window.open("login.html", "_self");
+        }
     </script>
 </body>
 </html>
