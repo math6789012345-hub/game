@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --theme-color: black;
+            --theme-background-color: white;
+            --theme-nav-color: #eee;
+            --theme-nav-active-color: lightgreen;
+        }
+        body {
+            color: var(--theme-color);
+            background-color: var(--theme-background-color);
+        }
+        #nav-bar {
+            position: sticky;
+            top: 0px;
+            border-bottom: 5px solid var(--theme-nav-color);
+        }
+        #nav-links {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            color: var(--theme-nav-color);
+        }
+        .nav-link {
+            text-decoration: none;
+            color: inherit;
+            font-size: 2rem;
+            padding: 5px;
+        }
+        .nav-active {
+            color: var(--theme-nav-active-color);
+        }
+        #profile-picture-container {
+            width: 100%;
+            margin: 5% auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #profile-picture {
+            width: 50vw;
+            height: 50vw;
+            border: 2px solid var(--theme-color);
+            border-radius: 50%;
+        }
+        #data-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        #username {
+            text-shadow: 0 0 5px var(--theme-nav-active-color);
+        }
+    </style>
+</head>
+<body>
+    <div id="nav-bar">
+        <div id="nav-links">
+            <a class="nav-link" href="index.html"><i class="fa-solid fa-home"></i></a>
+            <a class="nav-link nav-active" href="profile.html"><i class="fa-solid fa-user"></i></a>
+            <a class="nav-link" href="users.html"><i class="fa-solid fa-users"></i></a>
+            <a class="nav-link" href="games.html"><i class="fa-solid fa-gamepad"></i></a>
+            <a class="nav-link" href="settings.html"><i class="fa-solid fa-gear"></i></a>
+        </div>
+    </div>
+    <div>
+        <button id="settings-button">Settings</button>
+        <button id="logout-button">Logout</button>
+    </div>
+    <script type="module">
+        let theme = localStorage.getItem("theme") || "light";
+        if (theme === "light") {
+            document.documentElement.style.setProperty('--theme-color', 'black');
+            document.documentElement.style.setProperty('--theme-background-color', 'white');
+            document.documentElement.style.setProperty('--theme-nav-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'green');
+        } else {
+            document.documentElement.style.setProperty('--theme-color', 'white');
+            document.documentElement.style.setProperty('--theme-background-color', 'black');
+            document.documentElement.style.setProperty('--theme-nav-color', '#eee');
+            document.documentElement.style.setProperty('--theme-nav-active-color', 'lightgreen');
+        }
+        
+        document.querySelector("#settings-button").addEventListener("click", () => {
+            window.open("settings.html", "_self");
+        });
+        
+        document.querySelector("#logout-button").addEventListener("click", () => {
+            localStorage.setItem("admin", "false");
+            window.open("login.html", "_self");
+        });
+        
+        if (localStorage.getItem("admin") !== "true") {
+            window.open("login.html", "_self");
+        }
+    </script>
+</body>
+</html>
