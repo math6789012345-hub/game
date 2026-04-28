@@ -118,22 +118,16 @@
             }
         }
 
-        async function addFirebaseData(path, dataObj, overwrite = false) {
+        async function updateFirebaseData(path, dataObj, addData = false) {
             const dbRef = ref(db, path);
-            if (!overwrite) {
+            if (!addData) {
                 const snapshot = await get(dbRef);
-                if (snapshot.exists()) return "Data already exists! (Overwrite is false)";
+                if (!snapshot.exists()) return "Cannot update! Node doesn't exist and addData is false.";
             }
-            await set(dbRef, dataObj);
-            return "Data added successfully!";
+            await update(dbRef, dataObj);
+            return "Data updated successfully!";
         }
 
-        async function removeFirebaseData(path) {
-            const dbRef = ref(db, path);
-            await remove(dbRef);
-            return "Data removed successfully!";
-        }
-        
         // --- data
         
         let theme = localStorage.getItem("theme") || "light";
@@ -181,9 +175,7 @@
         addVersionButton.addEventListener("click", async () => {
             let newVersion = document.querySelector("#add-version").value.split("").join(".");
             if (newVersion) {
-                addFirebaseData("data/project/game", {
-                    "version": newVersion
-                }, true).then((success) => {
+                updateFirebaseData("data/project/game", {"version": newVersion}, true).then((success) => {
                      alert(success);
                      window.open("index.html", "_self");
                 }).catch((error) => {
@@ -199,8 +191,13 @@
             let newNews = document.querySelector("#add-news").value;
             if (newNews) {
                 let all_news = await getFirebaseData("data/project/game/news");
-                all_news.push(newNews);
-                addFirebaseData("data/project/game/news", all_news, true).then((success) => {
+                if (typeof(all_news) === "object") {
+                    all_news.push(newNews);
+                } else {
+                    all_news = [newNews];
+                }
+                all_news = all_news.filter(news => news !== undefined);
+                updateFirebaseData("data/project/game", {"news": all_news}, true).then((success) => {
                      alert(success);
                      window.open("index.html", "_self");
                 }).catch((error) => {
