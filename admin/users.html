@@ -180,7 +180,7 @@
                 userAddButton.classList.add("user-add-button");
                 userAddButton.innerText = "Add";
                 userAddButton.addEventListener("click", () => {
-                    localStorage.setItem("userId" + value.username);
+                    localStorage.setItem("userId", value.username);
                     window.open("../profile.html", "_self");
                 });
                 userContainer.appendChild(userAddButton);
