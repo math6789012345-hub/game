@@ -20,7 +20,7 @@
         .nav-active { color: green; }
         #game { display: flex; flex-direction: column; align-items: center; padding: 20px; }
         #status { padding: 15px; margin-bottom: 5px; font-size: 1.5rem; font-weight: bold; text-align: center; }
-        #error-msg { color: red; font-size: 1rem; margin-bottom: 15px; height: 20px; font-weight: bold; text-align: center; }
+        #error-msg { color: red; font-size: 1rem; margin-bottom: 15px; min-height: 20px; font-weight: bold; text-align: center; }
         #board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 300px; background: var(--board-bg); padding: 5px; border-radius: 10px; }
         .cell { aspect-ratio: 1; background: var(--cell-bg); display: flex; justify-content: center; align-items: center; font-size: 3rem; font-weight: bold; cursor: pointer; border-radius: 5px; user-select: none; }
     </style>
@@ -76,30 +76,33 @@
         };
 
         const getAiMove = async (bd, c, h) => {
-            // Send the prompt directly from the client to the serverless function
-            const prompt = `You are a perfect Tic-Tac-Toe AI. The board is an array of 9 elements (indices 0-8). Empty spaces are represented by "". 
-            Current board state: ${JSON.stringify(bd)}
-            You are playing as '${c}'. Your opponent is playing as '${h}'.
-            Calculate the best move to win, or at least draw. 
-            CRITICAL INSTRUCTION: Reply ONLY with a single integer (0-8) representing the index of your chosen move. Do not include markdown, letters, or punctuation.`;
-
+            const prompt = `Tic-Tac-Toe: Board ${JSON.stringify(bd)}. You are '${c}', opponent '${h}'. Reply with only the integer index (0-8) of the best move.`;
             try {
-                const res = await fetch('/api/gemini', {
-                    method: 'POST', 
+                // WARNING: process.env is undefined in pure browsers. 
+                // This requires a build tool (like Vite/Webpack) to inject the variable.
+                const apiKey = process.env.GEMINI_API_KEY; 
+                
+                if (!apiKey) throw new Error("API Key is missing or process.env failed.");
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: prompt })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
                 
-                if(!res.ok) throw new Error("API failed");
                 const data = await res.json();
+                if (!res.ok) throw new Error(data.error?.message || `HTTP error! status: ${res.status}`);
                 
-                if(data.error) throw new Error(data.error);
+                const text = data.candidates[0].content.parts[0].text.trim();
+                const index = parseInt(text.replace(/[^0-9]/g, ''));
+                
+                if (isNaN(index) || index < 0 || index > 8) throw new Error(`Invalid AI response: ${text}`);
                 
                 errBox.innerText = ""; 
-                return parseInt(data.index);
+                return index;
             } catch (e) {
-                console.error(e);
-                errBox.innerText = "AI connection failed. Using offline computer fallback.";
+                errBox.innerText = `AI Error: ${e.message} - Using fallback.`;
+                console.error("AI Fetch Error:", e);
                 return getComputerMove(bd, c, h);
             }
         };
