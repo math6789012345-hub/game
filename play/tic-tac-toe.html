@@ -38,6 +38,7 @@
         <div id="error-msg"></div>
         <div id="board"></div>
     </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
@@ -75,21 +76,30 @@
         };
 
         const getAiMove = async (bd, c, h) => {
-            const reqPrompt = `You are playing Tic-Tac-Toe. The board is an array of 9 spaces (0-8): ${JSON.stringify(bd)}. You are playing as '${c}', and your opponent is '${h}'. Return ONLY a single integer (0-8) representing the index of your best move to win or draw. Do not return any other text, characters, or markdown formatting.`;
+            // Send the prompt directly from the client to the serverless function
+            const prompt = `You are a perfect Tic-Tac-Toe AI. The board is an array of 9 elements (indices 0-8). Empty spaces are represented by "". 
+            Current board state: ${JSON.stringify(bd)}
+            You are playing as '${c}'. Your opponent is playing as '${h}'.
+            Calculate the best move to win, or at least draw. 
+            CRITICAL INSTRUCTION: Reply ONLY with a single integer (0-8) representing the index of your chosen move. Do not include markdown, letters, or punctuation.`;
+
             try {
                 const res = await fetch('/api/gemini', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: reqPrompt })
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
                 });
-                if(!res.ok) throw new Error("API error");
+                
+                if(!res.ok) throw new Error("API failed");
                 const data = await res.json();
+                
                 if(data.error) throw new Error(data.error);
-                const aiIndex = parseInt(data.text.replace(/[^0-9]/g, ''));
-                if(isNaN(aiIndex) || bd[aiIndex] !== "") throw new Error("Invalid move from AI");
+                
                 errBox.innerText = ""; 
-                return aiIndex;
+                return parseInt(data.index);
             } catch (e) {
-                errBox.innerText = "AI failed. Using offline fallback.";
+                console.error(e);
+                errBox.innerText = "AI connection failed. Using offline computer fallback.";
                 return getComputerMove(bd, c, h);
             }
         };
